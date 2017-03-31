@@ -1,0 +1,44 @@
+Zucchini firmware validation framework.
+
+= Project objectives
+
+ZFVF works if it offers the following value:
+
+* Is very simple to use
+* Require no dependencies other than busybox
+* Helps developers creating better software
+
+= Base config
+
+The base configuration looks like that:
+
+<pre>
+# Include additional conf snippets
+zucchini_conf_include /etc/zucchini/conf.d/*.conf
+
+# Run additional tests
+zucchinif_run_dir /etc/zucchini/tests.d/*
+
+# Run additional tests with multiple test folders
+zucchinif_run_dirs folder_0 folder_1 folder_n
+</pre>
+
+= Adding a test from a package
+
+Scenario: you're writing a Buildroot package ('myapp'), and would like
+to add a few tests for it.
+
+First, let's add a few tests that zucchini can provide:
+- user 'appuser' exists
+- process 'myapp' is running
+
+/etc/zucchini/conf.d/myapp.conf:
+
+<pre>
+# ensure user 'appuser' exists
+zucchini_user appuser
+
+# process 'myapp'
+zucchini_process myapp
+</pre>
+
