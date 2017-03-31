@@ -1,0 +1,157 @@
+#!/bin/sh
+#
+# Zucchini a firmware validation framework (ZFTF)
+
+set -e
+
+# Default configuration file
+ZUCCHINI_CONF='/etc/zucchini/zucchini.conf'
+ZUCCHINI_RUNDIR='/etc/zucchini/tests.d'
+
+# Debug
+if [ -n "$ZUCCHINI_DEBUG" ]; then
+	ZUCCHINI_CONF='./zucchini.conf'
+	ZUCCHINI_RUNDIR='tests.d'
+fi
+
+# Use this file to override default config
+if [ -r /etc/default/zucchini ]; then
+	. /etc/default/zucchini
+fi
+
+# zucchini_conf_include: source additional configs
+# arg: $* - configs to include
+zucchini_conf_include()
+{
+	local f
+
+	for f in "$@"; do
+		# TODO: include the case where arg is a dir
+		# in this case, we load every file in it!
+
+		if [ ! -r "$f" ]; then
+			echo >&2 "zucchini: warning: can't include \"$f\""
+			continue
+		fi
+		. "$f"
+	done
+}
+
+# zucchini_log: log arguments on stdout
+zucchini_log()
+{
+	echo "zucchini: $@"
+}
+
+# _zucchini_prepare: Prepare test for result
+# arg1: description of test
+_zucchini_prepare()
+{
+	__zucchini_cur_test="$@"
+}
+
+# run the test and its context
+zucchini_runner()
+{
+	if "$@" > /dev/null ; then
+		_zucchini_result PASS
+	else
+		_zucchini_result FAIL
+	fi
+}
+
+# _zucchini_result: display test result
+# arg1: "PASS" or "FAIL"
+# arg2: optional error message
+_zucchini_result()
+{
+	local result="$1"
+
+	[ "$result" = "PASS" -o "$result" = "FAIL" ] || return 1
+	zucchini_log "[$result] : $__zucchini_cur_test"
+}
+
+# zucchini_user: checks if user $1 exists
+
+zucchini_user()
+{
+	zucchini_runner _zucchini_user "$1"
+}
+
+zucchini_process()
+{
+	zucchini_runner _zucchini_process "$1"
+}
+
+zucchini_run_dir()
+{
+	_zucchini_run_dir "$1"
+}
+
+_zucchini_user()
+{
+	local user="$1"
+
+	_zucchini_prepare "Checking user \"$user\""
+	grep -q "^$user:" /etc/passwd
+}
+
+# zucchini_process: checks if process $1 runs
+_zucchini_process()
+{
+	local pname="$1"
+
+	_zucchini_prepare "Checking process \"$pname\""
+	pgrep "$1" > /dev/null
+}
+
+_checkfile()
+{
+	local file="$1"
+
+	if [ ! -f  "$file" ]; then
+		_zucchini_prepare "External test: $file"
+		_zucchini_result FAIL
+		return 1
+	fi
+}
+
+_checkdir()
+{
+	local dir="$1"
+
+	if [ ! -d "$dir" ]; then
+		_zucchini_prepare "External dir: $dir"
+		_zucchini_result FAIL
+		return 1
+	fi
+}
+
+# zucchini_rundir: run scripts in given directory
+# arg: $*: list of directories
+zucchini_run_dirs()
+{
+	local dir
+
+	for dir in "$@"; do
+		_checkdir "$dir" || continue
+		_zucchini_run_dir "$dir"
+	done
+}
+
+# zucchini_run_dir: run all tests file in $1
+_zucchini_run_dir()
+{
+	local dir="$1"
+	local f
+
+	for f in "$dir"/*; do
+		_checkfile "$f" || continue
+		_zucchini_prepare "External: $f"
+		zucchini_runner "$f"
+	done
+}
+
+
+zucchini_conf_include "$ZUCCHINI_CONF"
+zucchini_run_dir "$ZUCCHINI_RUNDIR"
