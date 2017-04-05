@@ -3,10 +3,11 @@ zucchini_user mysql
 zucchini_process udchcpd
 zucchini_run_dirs /etc/zucchini/tests.d
 zucchini_process Xorg
+zucchini_process nginx www-data
 zucchini_python_pkg math
 
 # Those tests should always fail
-zucchini_process nonexistant
+zucchini_process nonexistant nonexistant
 zucchini_user nonexistant
 zucchini_python_pkg nonexistant
 
