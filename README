@@ -33,6 +33,7 @@ First, let's add a few tests that zucchini can provide:
 - process 'myapp' is running
 - process 'myapp' is running with user 'myuser'
 - python package 'mypkg' is present
+- http request 'www.mypage.com'
 
 /etc/zucchini/conf.d/myapp.conf:
 
@@ -48,5 +49,8 @@ zucchini_process myapp myuser
 
 # python package 'mypkg'
 zucchini_python_pkg mypkg
+
+# http request 'www.mypage.com'
+zucchini_http_request www.mypage.com
 </pre>
 
