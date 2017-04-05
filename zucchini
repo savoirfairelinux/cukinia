@@ -98,6 +98,12 @@ zucchini_run_dir()
 	_zucchini_run_dir "$1"
 }
 
+# _zucchini_http_request user API
+zucchini_http_request()
+{
+	zucchini_runner _zucchini_http_request "$1"
+}
+
 # _zucchini_python_pkg: try to import the python package
 # arg1: the python package
 _zucchini_python_pkg()
@@ -133,6 +139,16 @@ _zucchini_process()
 		local result=$(ps -o comm | awk ' $1 == "'$pname$'" { print $1 } ')
 	fi
 	[ -n "$result" ] && return 0 || return 1
+}
+
+
+# zucchini_http_request: test the request using wget and wait for a return.
+_zucchini_http_request()
+{
+	local request="$1"
+
+	_zucchini_prepare "Checking http request \"$request\""
+	wget "$request" -O- > /dev/null 2>&1
 }
 
 _checkfile()
