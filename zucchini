@@ -72,15 +72,18 @@ _zucchini_result()
 }
 
 # zucchini_user: checks if user $1 exists
-
 zucchini_user()
 {
 	zucchini_runner _zucchini_user "$1"
 }
 
+# zucchini_process: user API
+# Optional: check if the process exist for a given username at $2
+# arg: $1: the process name
+# arg: $2: the user name
 zucchini_process()
 {
-	zucchini_runner _zucchini_process "$1"
+	zucchini_runner _zucchini_process "$1" "$2"
 }
 
 # zucchini_python_pkg: user API
@@ -113,13 +116,23 @@ _zucchini_user()
 	grep -q "^$user:" /etc/passwd
 }
 
-# zucchini_process: checks if process $1 runs
+# zucchini_process: checks if process $pname runs
+# Optional: check if the process exist for a given username $puser
+# arg: $1: the process name
+# arg: $2: the user name
 _zucchini_process()
 {
 	local pname="$1"
+	local puser="$2"
 
-	_zucchini_prepare "Checking process \"$pname\""
-	pgrep "$1" > /dev/null
+	if [ -n "$puser" ]; then
+		_zucchini_prepare "Checking process \"$pname\" with user $puser"
+		local result=$(ps -o user,comm | awk ' $1 == "'$puser'" && $2 == "'$pname$'" { print $2 } ')
+	else
+		_zucchini_prepare "Checking process \"$pname\""
+		local result=$(ps -o comm | awk ' $1 == "'$pname$'" { print $1 } ')
+	fi
+	[ -n "$result" ] && return 0 || return 1
 }
 
 _checkfile()
