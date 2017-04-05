@@ -31,6 +31,7 @@ to add a few tests for it.
 First, let's add a few tests that zucchini can provide:
 - user 'appuser' exists
 - process 'myapp' is running
+- python package 'mypkg' is present
 
 /etc/zucchini/conf.d/myapp.conf:
 
@@ -40,5 +41,8 @@ zucchini_user appuser
 
 # process 'myapp'
 zucchini_process myapp
+
+# python package 'mypkg'
+zucchini_python_pkg mypkg
 </pre>
 
