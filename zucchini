@@ -83,9 +83,26 @@ zucchini_process()
 	zucchini_runner _zucchini_process "$1"
 }
 
+# zucchini_python_pkg: user API
+# arg1: the python package to test
+zucchini_python_pkg()
+{
+	zucchini_runner _zucchini_python_pkg "$1"
+}
+
 zucchini_run_dir()
 {
 	_zucchini_run_dir "$1"
+}
+
+# _zucchini_python_pkg: try to import the python package
+# arg1: the python package
+_zucchini_python_pkg()
+{
+	local package="$1"
+
+	_zucchini_prepare "Checking python package: $package"
+	python -c "import sys, pkgutil; sys.exit(0 if pkgutil.find_loader('$package') else 1)"
 }
 
 _zucchini_user()
