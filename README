@@ -1,8 +1,10 @@
-Zucchini firmware validation framework.
+Cukinia firmware validation framework.
+
+Copyright (C) 2017 Savoir-faire Linux Inc.
 
 = Project objectives
 
-ZFVF works if it offers the following value:
+Cukinia works if it offers the following value:
 
 * Is very simple to use
 * Require no dependencies other than busybox
@@ -14,13 +16,13 @@ The base configuration looks like that:
 
 <pre>
 # Include additional conf snippets
-zucchini_conf_include /etc/zucchini/conf.d/*.conf
+cukinia_conf_include /etc/cukinia_/conf.d/*.conf
 
 # Run additional tests
-zucchinif_run_dir /etc/zucchini/tests.d/*
+cukinia_run_dir /etc/cukinia_/tests.d/*
 
 # Run additional tests with multiple test folders
-zucchinif_run_dirs folder_0 folder_1 folder_n
+cukinia_run_dirs folder_0 folder_1 folder_n
 </pre>
 
 = Adding a test from a package
@@ -28,29 +30,29 @@ zucchinif_run_dirs folder_0 folder_1 folder_n
 Scenario: you're writing a Buildroot package ('myapp'), and would like
 to add a few tests for it.
 
-First, let's add a few tests that zucchini can provide:
+First, let's add a few tests that cukinia can provide:
 - user 'appuser' exists
 - process 'myapp' is running
 - process 'myapp' is running with user 'myuser'
 - python package 'mypkg' is present
 - http request 'www.mypage.com'
 
-/etc/zucchini/conf.d/myapp.conf:
+/etc/cukinia/conf.d/myapp.conf:
 
 <pre>
 # ensure user 'appuser' exists
-zucchini_user appuser
+cukinia_user appuser
 
 # process 'myapp'
-zucchini_process myapp
+cukinia_process myapp
 
 # process 'myapp' with user 'myuser'
-zucchini_process myapp myuser
+cukinia_process myapp myuser
 
 # python package 'mypkg'
-zucchini_python_pkg mypkg
+cukinia_python_pkg mypkg
 
 # http request 'www.mypage.com'
-zucchini_http_request www.mypage.com
+cukinia_http_request www.mypage.com
 </pre>
 

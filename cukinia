@@ -1,0 +1,205 @@
+#!/bin/sh
+#
+# Cukinia a firmware validation framework
+#
+# Copyright (C) 2017 Savoir-faire Linux Inc.
+
+set -e
+
+# Default configuration file
+CUKINIA_CONF='/etc/cukinia/cukinia.conf'
+CUKINIA_RUNDIR='/etc/cukinia/tests.d'
+
+# Debug
+if [ -n "$CUKINIA_DEBUG" ]; then
+	CUKINIA_CONF='./cukinia.conf'
+	CUKINIA_RUNDIR='tests.d'
+fi
+
+# Use this file to override default config
+if [ -r /etc/default/cukinia ]; then
+	. /etc/default/cukinia
+fi
+
+# cukinia_conf_include: source additional configs
+# arg: $* - configs to include
+cukinia_conf_include()
+{
+	local f
+
+	for f in "$@"; do
+		# TODO: include the case where arg is a dir
+		# in this case, we load every file in it!
+
+		if [ ! -r "$f" ]; then
+			echo >&2 "cukinia: warning: can't include \"$f\""
+			continue
+		fi
+		. "$f"
+	done
+}
+
+# cukinia_log: log arguments on stdout
+cukinia_log()
+{
+	echo "cukinia: $@"
+}
+
+# _cukinia_prepare: Prepare test for result
+# arg1: description of test
+_cukinia_prepare()
+{
+	__cukinia_cur_test="$@"
+}
+
+# run the test and its context
+cukinia_runner()
+{
+	if "$@" > /dev/null ; then
+		_cukinia_result PASS
+	else
+		_cukinia_result FAIL
+	fi
+}
+
+# _cukinia_result: display test result
+# arg1: "PASS" or "FAIL"
+# arg2: optional error message
+_cukinia_result()
+{
+	local result="$1"
+
+	[ "$result" = "PASS" -o "$result" = "FAIL" ] || return 1
+	cukinia_log "[$result] : $__cukinia_cur_test"
+}
+
+# cukinia_user: checks if user $1 exists
+cukinia_user()
+{
+	cukinia_runner _cukinia_user "$1"
+}
+
+# cukinia_process: user API
+# Optional: check if the process exist for a given username at $2
+# arg: $1: the process name
+# arg: $2: the user name
+cukinia_process()
+{
+	cukinia_runner _cukinia_process "$1" "$2"
+}
+
+# cukinia_python_pkg: user API
+# arg1: the python package to test
+cukinia_python_pkg()
+{
+	cukinia_runner _cukinia_python_pkg "$1"
+}
+
+cukinia_run_dir()
+{
+	_cukinia_run_dir "$1"
+}
+
+# _cukinia_http_request user API
+cukinia_http_request()
+{
+	cukinia_runner _cukinia_http_request "$1"
+}
+
+# _cukinia_python_pkg: try to import the python package
+# arg1: the python package
+_cukinia_python_pkg()
+{
+	local package="$1"
+
+	_cukinia_prepare "Checking python package: $package"
+	python -c "import sys, pkgutil; sys.exit(0 if pkgutil.find_loader('$package') else 1)"
+}
+
+_cukinia_user()
+{
+	local user="$1"
+
+	_cukinia_prepare "Checking user \"$user\""
+	grep -q "^$user:" /etc/passwd
+}
+
+# cukinia_process: checks if process $pname runs
+# Optional: check if the process exist for a given username $puser
+# arg: $1: the process name
+# arg: $2: the user name
+_cukinia_process()
+{
+	local pname="$1"
+	local puser="$2"
+
+	if [ -n "$puser" ]; then
+		_cukinia_prepare "Checking process \"$pname\" with user $puser"
+		local result=$(ps -o user,comm | awk ' $1 == "'$puser'" && $2 == "'$pname$'" { print $2 } ')
+	else
+		_cukinia_prepare "Checking process \"$pname\""
+		local result=$(ps -o comm | awk ' $1 == "'$pname$'" { print $1 } ')
+	fi
+	[ -n "$result" ] && return 0 || return 1
+}
+
+
+# cukinia_http_request: test the request using wget and wait for a return.
+_cukinia_http_request()
+{
+	local request="$1"
+
+	_cukinia_prepare "Checking http request \"$request\""
+	wget "$request" -O- > /dev/null 2>&1
+}
+
+_checkfile()
+{
+	local file="$1"
+
+	if [ ! -f  "$file" ]; then
+		_cukinia_prepare "External test: $file"
+		_cukinia_result FAIL
+		return 1
+	fi
+}
+
+_checkdir()
+{
+	local dir="$1"
+
+	if [ ! -d "$dir" ]; then
+		_cukinia_prepare "External dir: $dir"
+		_cukinia_result FAIL
+		return 1
+	fi
+}
+
+# cukinia_rundir: run scripts in given directory
+# arg: $*: list of directories
+cukinia_run_dirs()
+{
+	local dir
+
+	for dir in "$@"; do
+		_checkdir "$dir" || continue
+		_cukinia_run_dir "$dir"
+	done
+}
+
+# cukinia_run_dir: run all tests file in $1
+_cukinia_run_dir()
+{
+	local dir="$1"
+	local f
+
+	for f in "$dir"/*; do
+		_checkfile "$f" || continue
+		_cukinia_prepare "External: $f"
+		cukinia_runner "$f"
+	done
+}
+
+
+cukinia_conf_include "$CUKINIA_CONF"
+cukinia_run_dir "$CUKINIA_RUNDIR"
