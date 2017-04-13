@@ -59,6 +59,7 @@ cukinia_runner()
 		_cukinia_result PASS
 	else
 		_cukinia_result FAIL
+		cukinia_failures=$((cukinia_failures + 1))
 	fi
 }
 
@@ -257,6 +258,13 @@ _cukinia_run_dir()
 	done
 }
 
+cukinia_failures=0
 
 cukinia_conf_include "$CUKINIA_CONF"
 cukinia_run_dir "$CUKINIA_RUNDIR"
+
+if [ $cukinia_failures -gt 0 ]; then
+	exit 1
+fi
+
+exit 0
