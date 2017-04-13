@@ -38,7 +38,11 @@ A cukinia config file supports the following statements:
 * ``cukinia_conf_include <files>``: Includes files as additional config files
 * ``cukinia_log <message>``: Logs message to stdout
 
-### Example
+### Useful variables
+
+* ``$cukinia_failures``: number of tests that failed
+
+### Example cukinia.conf
 
 ```shell
 
@@ -51,6 +55,9 @@ cukinia_conf_include /etc/cukinia/conf.d/*.conf
 
 # Is our embedded webservice up?
 cukinia_http_request http://localhost:8080/sanitycheck
+
+# End
+cukinia_log "done, $cukinia_failures problems"
 ```
 
 ## License
