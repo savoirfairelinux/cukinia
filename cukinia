@@ -59,6 +59,7 @@ cukinia_runner()
 		_cukinia_result FAIL
 		cukinia_failures=$((cukinia_failures + 1))
 	fi
+	cukinia_tests=$((cukinia_tests + 1))
 }
 
 # _cukinia_result: display test result
@@ -256,6 +257,7 @@ _cukinia_run_dir()
 	done
 }
 
+cukinia_tests=0
 cukinia_failures=0
 
 cukinia_conf_include "$CUKINIA_CONF"
