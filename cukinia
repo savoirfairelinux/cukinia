@@ -4,8 +4,6 @@
 #
 # Copyright (C) 2017 Savoir-faire Linux Inc.
 
-set -e
-
 # Default configuration file
 CUKINIA_CONF='/etc/cukinia/cukinia.conf'
 
@@ -47,19 +45,32 @@ cukinia_log()
 # arg1: description of test
 _cukinia_prepare()
 {
-	__cukinia_cur_test="$@"
+	__cukinia_cur_test="${@}${__not:+ (is false)}"
 }
 
 # run the test and its context
 cukinia_runner()
 {
-	if "$@" > /dev/null ; then
-		_cukinia_result PASS
-	else
+	"$@" >/dev/null
+	case "$__not..$?" in
+	1..0)
 		_cukinia_result FAIL
 		cukinia_failures=$((cukinia_failures + 1))
-	fi
+		;;
+	1..*)
+		_cukinia_result PASS
+		;;
+	..0)
+		_cukinia_result PASS
+		;;
+	..*)
+		_cukinia_result FAIL
+		cukinia_failures=$((cukinia_failures + 1))
+		;;
+	esac
+
 	cukinia_tests=$((cukinia_tests + 1))
+	[ -z "$__not" ] || unset __not
 }
 
 # _cukinia_result: display test result
@@ -114,6 +125,12 @@ cukinia_run_dir()
 cukinia_http_request()
 {
 	cukinia_runner _cukinia_http_request "$1"
+}
+
+# not: negate the issue of what follows
+not()
+{
+	__not=1 "$@"
 }
 
 # _cukinia_python_pkg: try to import the python package
