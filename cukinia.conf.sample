@@ -8,8 +8,9 @@ cukinia_python_pkg math
 cukinia_http_request www.google.com
 
 # Those tests should always fail
-cukinia_process nonexistant nonexistant
-cukinia_user nonexistant
-cukinia_http_request www.google.com
-cukinia_python_pkg nonexistant
+cukinia_process nonexistent nonexistent
+cukinia_user nonexistent
+cukinia_http_request http://127.0.0.1:81/
+cukinia_python_pkg nonexistent
 
+cukinia_log "result: $cukinia_failures failure(s)"
