@@ -37,6 +37,7 @@ A cukinia config file supports the following statements:
 
 ### Useful variables
 
+* ``$cukinia_tests``: number of tests attempted
 * ``$cukinia_failures``: number of tests that failed
 
 ### Example cukinia.conf
@@ -57,7 +58,7 @@ cukinia_http_request http://localhost:8080/sanitycheck
 cukinia_run_dir /etc/cukinia/myapp1.d/
 
 # End
-cukinia_log "done, $cukinia_failures problems"
+cukinia_log "ran $cukinia_tests tests, $cukinia_failed failures"
 ```
 
 ## License
