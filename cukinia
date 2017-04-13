@@ -69,7 +69,17 @@ _cukinia_result()
 {
 	local result="$1"
 
-	[ "$result" = "PASS" -o "$result" = "FAIL" ] || return 1
+	case "$result" in
+	PASS)
+		result=$(_colorize green "PASS")
+		;;
+	FAIL)
+		result=$(_colorize red "FAIL")
+		;;
+	*)
+		;;
+	esac
+
 	cukinia_log "[$result] : $__cukinia_cur_test"
 }
 
@@ -173,6 +183,53 @@ _checkdir()
 		_cukinia_result FAIL
 		return 1
 	fi
+}
+
+# _colorize: return colorized string
+# arg1: color name
+# arg2..: string
+_colorize()
+{
+	local color="$1"; shift
+	local text="$@"
+	local nc='\033[0m'
+	local c
+
+	# Only colorize a few terminal types
+	case "$TERM" in
+	linux*|xterm*)
+		;;
+	*)
+		echo "$@"
+		return
+		;;
+	esac
+
+	case "$color" in
+	gray)
+		c='\033[1;30m'
+		;;
+	red)
+		c='\033[1;31m'
+		;;
+	green)
+		c='\033[1;32m'
+		;;
+	yellow)
+		c='\033[1;33m'
+		;;
+	blue)
+		c='\033[1;34m'
+		;;
+	purple)
+		c='\033[1;35m'
+		;;
+	cyan)
+		c='\033[1;36m'
+		;;
+	esac
+
+	printf "${c}${text}${nc}"
 }
 
 # cukinia_rundir: run scripts in given directory
