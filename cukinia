@@ -8,12 +8,10 @@ set -e
 
 # Default configuration file
 CUKINIA_CONF='/etc/cukinia/cukinia.conf'
-CUKINIA_RUNDIR='/etc/cukinia/tests.d'
 
 # Debug
 if [ -n "$CUKINIA_DEBUG" ]; then
 	CUKINIA_CONF='./cukinia.conf'
-	CUKINIA_RUNDIR='tests.d'
 fi
 
 # Use this file to override default config
@@ -261,7 +259,6 @@ _cukinia_run_dir()
 cukinia_failures=0
 
 cukinia_conf_include "$CUKINIA_CONF"
-cukinia_run_dir "$CUKINIA_RUNDIR"
 
 if [ $cukinia_failures -gt 0 ]; then
 	exit 1

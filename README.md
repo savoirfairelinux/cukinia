@@ -18,10 +18,7 @@ Cukinia works if it offers the following value:
 ## Basic config
 
 To run Cukinia, create a configuration describing your tests, and
-invoke it.
-
-By default, cukinia reads ``/etc/cukinia/cukinia.conf`` and executes
-all executable tests in ``/etc/cukinia/tests.d/``.
+invoke it. By default, cukinia reads ``/etc/cukinia/cukinia.conf``.
 
 A cukinia config file supports the following statements:
 
@@ -34,8 +31,8 @@ A cukinia config file supports the following statements:
 
 ### Utility statements
 
-* ``cukinia_run_dir <directory>``: Runs all executables in directory as individual tests
 * ``cukinia_conf_include <files>``: Includes files as additional config files
+* ``cukinia_run_dir <directory>``: Runs all executables in directory as individual tests
 * ``cukinia_log <message>``: Logs message to stdout
 
 ### Useful variables
@@ -55,6 +52,9 @@ cukinia_conf_include /etc/cukinia/conf.d/*.conf
 
 # Is our embedded webservice up?
 cukinia_http_request http://localhost:8080/sanitycheck
+
+# Run executable tests for myapp1
+cukinia_run_dir /etc/cukinia/myapp1.d/
 
 # End
 cukinia_log "done, $cukinia_failures problems"
