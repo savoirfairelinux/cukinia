@@ -28,6 +28,7 @@ A cukinia config file supports the following statements:
 * ``cukinia_process <pname> [user]``: Validates that process runs (optional user)
 * ``cukinia_python_pkg <pkg>``: Validates that Python package is installed
 * ``cukinia_http_request <url>``: Validates that url returns a 200 code
+* ``not``: Can prefix any test to invert the issue it will produce
 
 ### Utility statements
 
@@ -47,6 +48,9 @@ A cukinia config file supports the following statements:
 # Ensure our basic users are present
 cukinia_user appuser1
 cukinia_user appuser2
+
+# If this user exists, then something went wrong
+not cukinia_user baduser
 
 # Those config snippets are deployed by our packages
 cukinia_conf_include /etc/cukinia/conf.d/*.conf
