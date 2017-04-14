@@ -291,8 +291,5 @@ cukinia_failures=0
 
 cukinia_conf_include "$CUKINIA_CONF"
 
-if [ $cukinia_failures -gt 0 ]; then
-	exit 1
-fi
+[ $cukinia_failures -eq 0 ] && exit 0 || exit 1
 
-exit 0
