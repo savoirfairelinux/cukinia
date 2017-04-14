@@ -175,10 +175,10 @@ _cukinia_process()
 # cukinia_http_request: test the request using wget and wait for a return.
 _cukinia_http_request()
 {
-	local request="$1"
+	local url="$1"
 
-	_cukinia_prepare "Checking http request \"$request\""
-	wget "$request" -O- > /dev/null 2>&1
+	_cukinia_prepare "Checking http url \"$url\""
+	wget -q -O /dev/null "$url"
 }
 
 _checkfile()
