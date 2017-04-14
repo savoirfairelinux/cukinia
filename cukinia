@@ -51,7 +51,7 @@ _cukinia_prepare()
 # run the test and its context
 cukinia_runner()
 {
-	"$@" >/dev/null
+	[ -n "$__verbose" ] && "$@" || "$@" >/dev/null 2>&1
 	case "$__not..$?" in
 	1..0)
 		_cukinia_result FAIL
@@ -132,6 +132,14 @@ not()
 	__not=1
 	"$@"
 	unset __not
+}
+
+# verbose: the output of what follows will not be muted
+verbose()
+{
+	__verbose=1
+	"$@"
+	unset __verbose
 }
 
 # _cukinia_python_pkg: try to import the python package
