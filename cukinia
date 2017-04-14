@@ -70,7 +70,6 @@ cukinia_runner()
 	esac
 
 	cukinia_tests=$((cukinia_tests + 1))
-	[ -z "$__not" ] || unset __not
 }
 
 # _cukinia_result: display test result
@@ -130,7 +129,9 @@ cukinia_http_request()
 # not: negate the issue of what follows
 not()
 {
-	__not=1 "$@"
+	__not=1
+	"$@"
+	unset __not
 }
 
 # _cukinia_python_pkg: try to import the python package
