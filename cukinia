@@ -7,9 +7,12 @@
 # Default configuration file
 CUKINIA_CONF='/etc/cukinia/cukinia.conf'
 
-# Debug
-if [ -n "$CUKINIA_DEBUG" ]; then
-	CUKINIA_CONF='./cukinia.conf'
+# Take config file as first argument
+if [ -r "$1" ]; then
+	CUKINIA_CONF="$1"
+	if [ "$(dirname "$CUKINIA_CONF")" = "." ]; then
+		CUKINIA_CONF="./$CUKINIA_CONF"
+	fi
 fi
 
 # Use this file to override default config

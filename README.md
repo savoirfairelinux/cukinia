@@ -15,10 +15,15 @@ Cukinia works if it offers the following value:
 * It requires no dependencies other than busybox
 * It helps developers creating better software
 
+## Usage
+
+``cukinia [config file]``
+
 ## Basic config
 
 To run Cukinia, create a configuration describing your tests, and
 invoke it. By default, cukinia reads ``/etc/cukinia/cukinia.conf``.
+Alternatively, a config file can be passed to cukinia as its argument.
 
 A cukinia config file supports the following statements:
 
