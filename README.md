@@ -34,6 +34,8 @@ A cukinia config file supports the following statements:
 * ``cukinia_python_pkg <pkg>``: Validates that Python package is installed
 * ``cukinia_test <expr>``: Validates that test(1) expression is true
 * ``cukinia_http_request <url>``: Validates that url returns a 200 code
+* ``cukinia_mount <source> <mount point> [options]``: Validate the
+  presence of a mount on the system
 * ``not``: Can prefix any test to invert the issue it will produce
 * ``verbose``: Can prefix any test to preserve stdout/stderr
 
@@ -70,6 +72,9 @@ cukinia_http_request http://localhost:8080/sanitycheck
 
 # Run executable tests for myapp1
 cukinia_run_dir /etc/cukinia/myapp1.d/
+
+# Check for root mounting point on / in read write mode
+cukinia_mount sysfs /sys rw
 
 # End
 cukinia_log "ran $cukinia_tests tests, $cukinia_failed failures"
