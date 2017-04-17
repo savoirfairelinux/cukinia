@@ -133,6 +133,12 @@ cukinia_http_request()
 	cukinia_runner _cukinia_http_request "$1"
 }
 
+# cukinia_mount: user API
+cukinia_mount()
+{
+	cukinia_runner _cukinia_mount  "$@"
+}
+
 # not: negate the issue of what follows
 not()
 {
@@ -194,6 +200,25 @@ _cukinia_http_request()
 
 	_cukinia_prepare "Checking http url \"$url\""
 	wget -q -O /dev/null "$url"
+}
+
+# _cukinia_mount: check for a specific mount point
+# arg1: the mount source
+# arg2: the mount destination
+# arg@: (optinal) a list of options to look for
+_cukinia_mount()
+{
+	local source="$1"; shift
+	local mount_point="$1"; shift
+	local re=""
+
+	for term in "$@"; do
+		re="$re$term.*"
+	done
+
+	re="$source.*on $mount_point.*$re"
+	_cukinia_prepare "Checking for mount: $re"
+	mount | egrep -w "$re"
 }
 
 _checkfile()
