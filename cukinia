@@ -10,7 +10,6 @@
 
 # Default configuration file
 CUKINIA_CONF='/etc/cukinia/cukinia.conf'
-
 # Take config file as first argument
 if [ -r "$1" ]; then
 	CUKINIA_CONF="$1"
@@ -133,6 +132,16 @@ cukinia_http_request()
 	cukinia_runner _cukinia_http_request "$1"
 }
 
+# cukinia_mount: user API
+# We delegate the how the argument are manage to _cukinia_mount but it should be as follow:
+# arg1: the device
+# arg2: the mountpoint
+# arg@: (optinal) should contain a list of options to look for
+cukinia_mount()
+{
+	cukinia_runner _cukinia_mount  "$@"
+}
+
 # not: negate the issue of what follows
 not()
 {
@@ -194,6 +203,36 @@ _cukinia_http_request()
 
 	_cukinia_prepare "Checking http url \"$url\""
 	wget -q -O /dev/null "$url"
+}
+
+# _cukinia_mount: check for a specific mount point
+# arg1: the device
+# arg2: the mountpoint
+# arg@: (optinal) a list of options to look for
+_cukinia_mount()
+{
+	local device="$1"
+	local mountpoint="$2"
+	shift 2
+	local options="$@"
+	local found=0
+	local result
+
+	_cukinia_prepare "Checking mount: $device on $mountpoint with ${options:-any} options"
+
+	result=$(awk ' $1=="'$device'" && $2=="'$mountpoint'" { print $4 }' /proc/mounts | uniq)
+
+	[ -n "$result" ] || return 1
+
+	# ensure all mount options are set
+	for term in $options; do
+		if echo $result | grep -qw "$term"; then
+			found=$(( found+1 ))
+		fi
+	done
+
+	[ "$found" -eq "$#" ] || return 1
+	return 0
 }
 
 _checkfile()
