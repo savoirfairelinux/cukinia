@@ -1,7 +1,7 @@
 cukinia_user www-data
 cukinia_user mysql
 cukinia_process udchcpd
-cukinia_run_dirs /etc/cukinia/tests.d
+cukinia_run_dir /etc/cukinia/tests.d
 cukinia_process Xorg
 cukinia_process nginx www-data
 cukinia_python_pkg math
