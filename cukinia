@@ -48,13 +48,6 @@ cukinia_log()
 	echo "cukinia: $@"
 }
 
-# _cukinia_prepare: Prepare test for result
-# arg1: description of test
-_cukinia_prepare()
-{
-	__cukinia_cur_test="${@}${__not:+ (is false)}"
-}
-
 # run the test and its context
 cukinia_runner()
 {
@@ -122,15 +115,22 @@ cukinia_python_pkg()
 	cukinia_runner _cukinia_python_pkg "$1"
 }
 
-cukinia_run_dir()
-{
-	_cukinia_run_dir "$1"
-}
-
-# _cukinia_http_request user API
+# cukinia_http_request: query $1 url
 cukinia_http_request()
 {
 	cukinia_runner _cukinia_http_request "$1"
+}
+
+# cukinia_run_dirs: run scripts in given directory
+# arg: $*: list of directories
+cukinia_run_dirs()
+{
+	local dir
+
+	for dir in "$@"; do
+		_checkdir "$dir" || continue
+		_cukinia_run_dir "$dir"
+	done
 }
 
 # not: negate the issue of what follows
@@ -157,6 +157,13 @@ _cukinia_python_pkg()
 
 	_cukinia_prepare "Checking python package: $package"
 	python -c "import sys, pkgutil; sys.exit(0 if pkgutil.find_loader('$package') else 1)"
+}
+
+# _cukinia_prepare: Prepare test for result
+# arg1: description of test
+_cukinia_prepare()
+{
+	__cukinia_cur_test="${@}${__not:+ (is false)}"
 }
 
 _cukinia_user()
@@ -263,18 +270,6 @@ _colorize()
 	esac
 
 	printf "${c}${text}${nc}"
-}
-
-# cukinia_rundir: run scripts in given directory
-# arg: $*: list of directories
-cukinia_run_dirs()
-{
-	local dir
-
-	for dir in "$@"; do
-		_checkdir "$dir" || continue
-		_cukinia_run_dir "$dir"
-	done
 }
 
 # cukinia_run_dir: run all tests file in $1
