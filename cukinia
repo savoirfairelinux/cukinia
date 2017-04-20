@@ -133,6 +133,13 @@ cukinia_run_dir()
 	done
 }
 
+# cukinia_test: wrapper to test(1)
+# arg1..: arguments to test(1)
+cukinia_test()
+{
+	cukinia_runner _cukinia_test "$@"
+}
+
 # not: negate the issue of what follows
 not()
 {
@@ -164,6 +171,13 @@ _cukinia_python_pkg()
 _cukinia_prepare()
 {
 	__cukinia_cur_test="${@}${__not:+ (is false)}"
+}
+
+# _cukinia_test: wrapper to test(1)
+_cukinia_test()
+{
+	_cukinia_prepare "Running  \"test $@\""
+	test "$@"
 }
 
 _cukinia_user()
