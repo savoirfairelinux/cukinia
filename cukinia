@@ -121,9 +121,9 @@ cukinia_http_request()
 	cukinia_runner _cukinia_http_request "$1"
 }
 
-# cukinia_run_dirs: run scripts in given directory
+# cukinia_run_dir: run scripts in given directories
 # arg: $*: list of directories
-cukinia_run_dirs()
+cukinia_run_dir()
 {
 	local dir
 
