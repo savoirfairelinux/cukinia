@@ -128,7 +128,7 @@ cukinia_run_dir()
 	local dir
 
 	for dir in "$@"; do
-		_checkdir "$dir" || continue
+		[ -d "$dir" ] || continue
 		_cukinia_run_dir "$dir"
 	done
 }
@@ -217,28 +217,6 @@ _cukinia_http_request()
 	wget -q -O /dev/null "$url"
 }
 
-_checkfile()
-{
-	local file="$1"
-
-	if [ ! -f  "$file" ]; then
-		_cukinia_prepare "External test: $file"
-		_cukinia_result FAIL
-		return 1
-	fi
-}
-
-_checkdir()
-{
-	local dir="$1"
-
-	if [ ! -d "$dir" ]; then
-		_cukinia_prepare "External dir: $dir"
-		_cukinia_result FAIL
-		return 1
-	fi
-}
-
 # _colorize: return colorized string
 # arg1: color name
 # arg2..: string
@@ -293,7 +271,7 @@ _cukinia_run_dir()
 	local f
 
 	for f in "$dir"/*; do
-		_checkfile "$f" || continue
+		[ -f "$f" ] || continue
 		_cukinia_prepare "External: $f"
 		cukinia_runner "$f"
 	done
