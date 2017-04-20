@@ -172,14 +172,12 @@ _cukinia_process()
 	local pname="$1"
 	local puser="$2"
 
-	if [ -n "$puser" ]; then
-		_cukinia_prepare "Checking process \"$pname\" with user $puser"
-		local result=$(ps -a -o user,comm | awk ' $1 == "'$puser'" && $2 == "'$pname'" { print $2 } ')
-	else
-		_cukinia_prepare "Checking process \"$pname\""
-		local result=$(ps -a -o comm | awk ' $1 == "'$pname'" { print $1 } ')
-	fi
-	[ -n "$result" ] && return 0 || return 1
+	_cukinia_prepare "Checking process \"$pname\" as ${puser:-any user}"
+	local ret=$(ps -a -o user,comm |
+			awk '($2 == "'$pname'") && ($1 ~ /^'${puser:-.*}'$/) {
+			    print;
+			}')
+	[ -n "$ret" ] && return 0 || return 1
 }
 
 
