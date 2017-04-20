@@ -72,27 +72,6 @@ cukinia_runner()
 	cukinia_tests=$((cukinia_tests + 1))
 }
 
-# _cukinia_result: display test result
-# arg1: "PASS" or "FAIL"
-# arg2: optional error message
-_cukinia_result()
-{
-	local result="$1"
-
-	case "$result" in
-	PASS)
-		result=$(_colorize green "PASS")
-		;;
-	FAIL)
-		result=$(_colorize red "FAIL")
-		;;
-	*)
-		;;
-	esac
-
-	cukinia_log "[$result] : $__cukinia_cur_test"
-}
-
 # cukinia_user: checks if user $1 exists
 cukinia_user()
 {
@@ -171,6 +150,27 @@ _cukinia_python_pkg()
 _cukinia_prepare()
 {
 	__cukinia_cur_test="${@}${__not:+ (is false)}"
+}
+
+# _cukinia_result: display test result
+# arg1: "PASS" or "FAIL"
+# arg2: optional error message
+_cukinia_result()
+{
+	local result="$1"
+
+	case "$result" in
+	PASS)
+		result=$(_colorize green "PASS")
+		;;
+	FAIL)
+		result=$(_colorize red "FAIL")
+		;;
+	*)
+		;;
+	esac
+
+	cukinia_log "[$result] : $__cukinia_cur_test"
 }
 
 # _cukinia_test: wrapper to test(1)
