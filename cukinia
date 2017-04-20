@@ -11,6 +11,13 @@
 # Default configuration file
 CUKINIA_CONF='/etc/cukinia/cukinia.conf'
 
+# Generic user functions templated to _cukinia_xxx()
+GENERIC_FUNCTS='http_request
+		process
+		python_pkg
+		test
+		user'
+
 # Take config file as first argument
 if [ -r "$1" ]; then
 	CUKINIA_CONF="$1"
@@ -42,13 +49,14 @@ cukinia_conf_include()
 	done
 }
 
-# cukinia_log: log arguments on stdout
+# cukinia_log: log arguments to stdout
 cukinia_log()
 {
 	echo "cukinia: $@"
 }
 
 # run the test and its context
+# arg1..n: command to run and their arguments
 cukinia_runner()
 {
 	[ -n "$__verbose" ] && "$@" || "$@" >/dev/null 2>&1
@@ -72,34 +80,6 @@ cukinia_runner()
 	cukinia_tests=$((cukinia_tests + 1))
 }
 
-# cukinia_user: checks if user $1 exists
-cukinia_user()
-{
-	cukinia_runner _cukinia_user "$1"
-}
-
-# cukinia_process: user API
-# Optional: check if the process exist for a given username at $2
-# arg: $1: the process name
-# arg: $2: the user name
-cukinia_process()
-{
-	cukinia_runner _cukinia_process "$1" "$2"
-}
-
-# cukinia_python_pkg: user API
-# arg1: the python package to test
-cukinia_python_pkg()
-{
-	cukinia_runner _cukinia_python_pkg "$1"
-}
-
-# cukinia_http_request: query $1 url
-cukinia_http_request()
-{
-	cukinia_runner _cukinia_http_request "$1"
-}
-
 # cukinia_run_dir: run scripts in given directories
 # arg: $*: list of directories
 cukinia_run_dir()
@@ -110,13 +90,6 @@ cukinia_run_dir()
 		[ -d "$dir" ] || continue
 		_cukinia_run_dir "$dir"
 	done
-}
-
-# cukinia_test: wrapper to test(1)
-# arg1..: arguments to test(1)
-cukinia_test()
-{
-	cukinia_runner _cukinia_test "$@"
 }
 
 # not: negate the issue of what follows
@@ -174,12 +147,14 @@ _cukinia_result()
 }
 
 # _cukinia_test: wrapper to test(1)
+# arg1..n: arguments to test(1)
 _cukinia_test()
 {
 	_cukinia_prepare "Running  \"test $@\""
 	test "$@"
 }
 
+# _cukinia_user: checks if user $1 exists
 _cukinia_user()
 {
 	local user="$1"
@@ -191,7 +166,7 @@ _cukinia_user()
 # cukinia_process: checks if process $pname runs
 # Optional: check if the process exist for a given username $puser
 # arg: $1: the process name
-# arg: $2: the user name
+# arg: $2: [optional] the user name
 _cukinia_process()
 {
 	local pname="$1"
@@ -209,6 +184,7 @@ _cukinia_process()
 
 
 # cukinia_http_request: test the request using wget and wait for a return.
+# arg1: url
 _cukinia_http_request()
 {
 	local url="$1"
@@ -277,10 +253,19 @@ _cukinia_run_dir()
 	done
 }
 
+# Template generic cukinia_* functions
+for func in $GENERIC_FUNCTS; do
+	eval "$(cat <<EOF
+cukinia_$func()
+{
+	cukinia_runner _cukinia_$func "\$@"
+}
+EOF
+)"
+done
+
 cukinia_tests=0
 cukinia_failures=0
-
 cukinia_conf_include "$CUKINIA_CONF"
 
 [ $cukinia_failures -eq 0 ] && exit 0 || exit 1
-
