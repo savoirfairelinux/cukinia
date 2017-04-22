@@ -80,6 +80,23 @@ cukinia_mount sysfs /sys rw
 cukinia_log "ran $cukinia_tests tests, $cukinia_failed failures"
 ```
 
+## More advanced config
+
+A config file is actually a POSIX shell script that is sourced by
+cukinia, so any logic can be used in a test file scenario. This is
+useful for example to make certain groups of tests depend on
+preliminary checks:
+
+```shell
+
+if cukinia_test -x /usr/bin/myapp; then
+	cukinia_user myuser
+	cukinia_process myapp myuser
+	cukinia_http_request http://localhost:8080/testme
+fi
+
+```
+
 ## License
 
 Cukinia is released under the Apache 2 license. In addition, it is
