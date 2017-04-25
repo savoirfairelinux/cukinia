@@ -19,6 +19,10 @@ Cukinia works if it offers the following value:
 
 ``cukinia [config file]``
 
+## Screenshot
+
+![Screenshot](doc/screenshot.png)
+
 ## Basic config
 
 To run Cukinia, create a configuration describing your tests, and
@@ -93,6 +97,8 @@ if cukinia_test -x /usr/bin/myapp; then
 	cukinia_user myuser
 	cukinia_process myapp myuser
 	cukinia_http_request http://localhost:8080/testme
+else
+	cukinia_log "$(_colorize red "myapp not found :(")"
 fi
 
 ```
