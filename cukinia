@@ -248,7 +248,7 @@ _colorize()
 
 	# Only colorize a few terminal types
 	case "$TERM" in
-	linux*|xterm*)
+	linux*|xterm*|vt102)
 		;;
 	*)
 		echo "$@"
