@@ -38,6 +38,7 @@ A cukinia config file supports the following statements:
 * ``cukinia_python_pkg <pkg>``: Validates that Python package is installed
 * ``cukinia_test <expr>``: Validates that test(1) expression is true
 * ``cukinia_http_request <url>``: Validates that url returns a 200 code
+* ``cukinia_cmd <command>``: Validates that arbitrary command returns true
 * ``cukinia_mount <source> <mount point> [options]``: Validate the
   presence of a mount on the system
 * ``not``: Can prefix any test to invert the issue it will produce
