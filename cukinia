@@ -100,6 +100,20 @@ cukinia_run_dir()
 	done
 }
 
+# as: change the description of what follows
+# arg1: "new description"
+# arg2..: command
+as()
+{
+	local ret=0
+	__deco="$1"; shift
+
+	"$@" || ret=1
+	unset __deco
+
+	return $ret
+}
+
 # not: negate the issue of what follows
 not()
 {
@@ -138,7 +152,7 @@ _cukinia_python_pkg()
 # arg1: description of test
 _cukinia_prepare()
 {
-	__cukinia_cur_test="${@}${__not:+ (is false)}"
+	__cukinia_cur_test="${__deco:-${1}}${__not:+ (is false)}"
 }
 
 # _cukinia_result: display test result
