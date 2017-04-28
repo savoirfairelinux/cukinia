@@ -12,7 +12,8 @@
 CUKINIA_CONF='/etc/cukinia/cukinia.conf'
 
 # Generic user functions templated to _cukinia_xxx()
-GENERIC_FUNCTS='http_request
+GENERIC_FUNCTS='cmd
+		http_request
 		mount
 		process
 		python_pkg
@@ -159,6 +160,14 @@ _cukinia_result()
 	esac
 
 	cukinia_log "[$result] : $__cukinia_cur_test"
+}
+
+# _cukinia_cmd: wrapper to any command
+# arg1..n: arguments
+_cukinia_cmd()
+{
+	_cukinia_prepare "Running  \"$@\""
+	"$@"
 }
 
 # _cukinia_test: wrapper to test(1)
