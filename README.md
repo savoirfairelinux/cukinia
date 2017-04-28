@@ -43,6 +43,7 @@ A cukinia config file supports the following statements:
   presence of a mount on the system
 * ``not``: Can prefix any test to invert the issue it will produce
 * ``verbose``: Can prefix any test to preserve stdout/stderr
+* ``as <string>``: Can prefix any test to change its textual description
 
 ### Utility statements
 
@@ -73,7 +74,7 @@ not cukinia_user baduser
 cukinia_conf_include /etc/cukinia/conf.d/*.conf
 
 # Is our embedded webservice up?
-cukinia_http_request http://localhost:8080/sanitycheck
+as "Checking webapp" cukinia_http_request http://localhost:8080/sanitycheck
 
 # Run executable tests for myapp1
 cukinia_run_dir /etc/cukinia/myapp1.d/
