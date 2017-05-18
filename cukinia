@@ -17,6 +17,7 @@ GENERIC_FUNCTS='cmd
 		mount
 		process
 		python_pkg
+		symlink
 		test
 		user'
 
@@ -245,6 +246,17 @@ _cukinia_http_request()
 
 	_cukinia_prepare "Checking http url \"$url\""
 	wget -q -O /dev/null "$url"
+}
+
+# _cukinia_symlink: validate the target of symlink
+# args1: link
+# args2: target
+_cukinia_symlink()
+{
+	local link="$1"
+	local target="$2"
+	_cukinia_prepare "Checking link "$link" points to "$target""
+	[ "$(readlink "$link")" = "$target" ] && return 0 || return 1
 }
 
 # _cukinia_mount: check for a specific mount point

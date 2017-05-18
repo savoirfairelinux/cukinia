@@ -41,6 +41,7 @@ A cukinia config file supports the following statements:
 * ``cukinia_cmd <command>``: Validates that arbitrary command returns true
 * ``cukinia_mount <source> <mount point> [options]``: Validate the
   presence of a mount on the system
+* ``cukinia_symlink <link> <target>``: Validate the target of a symlink
 * ``not``: Can prefix any test to invert the issue it will produce
 * ``verbose``: Can prefix any test to preserve stdout/stderr
 * ``as <string>``: Can prefix any test to change its textual description
@@ -85,6 +86,9 @@ cukinia_run_dir /etc/cukinia/myapp1.d/
 
 # Check for root mounting point on / in read write mode
 cukinia_mount sysfs /sys rw
+
+# Check the link interfaces point to /tmp/interfaces
+cukinia_symlink /etc/network/interfaces /tmp/interfaces
 
 # End
 cukinia_log "ran $cukinia_tests tests, $cukinia_failed failures"
