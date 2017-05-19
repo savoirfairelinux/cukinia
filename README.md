@@ -51,6 +51,10 @@ A cukinia config file supports the following statements:
 * ``cukinia_run_dir <directory>``: Runs all executables in directory as individual tests
 * ``cukinia_log <message>``: Logs message to stdout
 
+### Logging customization
+
+* ``logging prefix "string"``: prefix logs with "string"
+
 ### Useful variables
 
 * ``$cukinia_tests``: number of tests attempted

@@ -51,10 +51,28 @@ cukinia_conf_include()
 	done
 }
 
+# logging: change log string format
+# args: prefix "str" - prefix logs with "str"
+logging()
+{
+	case "$1" in
+	prefix)
+		shift
+		__log_pfx="$@"
+		;;
+	*)
+		cukinia_log "logging: invalid parameter"
+		return 1
+		;;
+	esac
+
+	return 0
+}
+
 # cukinia_log: log arguments to stdout
 cukinia_log()
 {
-	echo "cukinia: $@"
+	echo "${__log_pfx}$@"
 }
 
 # run the test and its context
@@ -173,7 +191,7 @@ _cukinia_result()
 		;;
 	esac
 
-	cukinia_log "[$result] : $__cukinia_cur_test"
+	cukinia_log "[$result] $__cukinia_cur_test"
 }
 
 # _cukinia_cmd: wrapper to any command
