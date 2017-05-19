@@ -91,7 +91,7 @@ cukinia_mount sysfs /sys rw
 cukinia_symlink /etc/network/interfaces /tmp/interfaces
 
 # End
-cukinia_log "ran $cukinia_tests tests, $cukinia_failed failures"
+cukinia_log "ran $cukinia_tests tests, $cukinia_failures failures"
 ```
 
 ## More advanced config
