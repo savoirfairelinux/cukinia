@@ -59,7 +59,7 @@ logging()
 	case "$1" in
 	prefix)
 		shift
-		__log_pfx="$@"
+		__log_pfx="$*"
 		;;
 	*)
 		cukinia_log "logging: invalid parameter"
@@ -73,7 +73,7 @@ logging()
 # cukinia_log: log arguments to stdout
 cukinia_log()
 {
-	echo "${__log_pfx}$@"
+	echo "${__log_pfx}$*"
 }
 
 # run the test and its context
@@ -82,7 +82,11 @@ cukinia_runner()
 {
 	local ret
 
-	[ -n "$__verbose" ] && "$@" || "$@" >/dev/null 2>&1
+	if [ -n "$__verbose" ]; then
+	       "$@"
+	else
+		"$@" >/dev/null 2>&1
+	fi
 	ret=$?
 
 	case "$__not..$ret" in
@@ -199,7 +203,7 @@ _cukinia_result()
 # arg1..n: arguments
 _cukinia_cmd()
 {
-	_cukinia_prepare "Running  \"$@\""
+	_cukinia_prepare "Running \"$*\""
 	"$@"
 }
 
@@ -207,7 +211,7 @@ _cukinia_cmd()
 # arg1..n: arguments to test(1)
 _cukinia_test()
 {
-	_cukinia_prepare "Running  \"test $@\""
+	_cukinia_prepare "Running \"test $*\""
 	test "$@"
 }
 
@@ -228,9 +232,10 @@ _cukinia_process()
 {
 	local pname="$1"
 	local puser="$2"
+	local ret
 
 	_cukinia_prepare "Checking process \"$pname\" as ${puser:-any user}"
-	local ret=$(ps -a -o user,comm |
+	ret=$(ps -a -o user,comm |
 			awk '($2 == "'$pname'") && ($1 ~ /^'${puser:-.*}'$/) {
 			    print;
 			}')
@@ -255,7 +260,7 @@ _cukinia_symlink()
 {
 	local link="$1"
 	local target="$2"
-	_cukinia_prepare "Checking link "$link" points to "$target""
+	_cukinia_prepare "Checking link \"$link\" points to \"$target\""
 	[ "$(readlink "$link")" = "$target" ] && return 0 || return 1
 }
 
@@ -268,7 +273,7 @@ _cukinia_mount()
 	local device="$1"
 	local mountpoint="$2"
 	shift 2
-	local options="$@"
+	local options="$*"
 	local found=0
 	local result
 
@@ -280,7 +285,7 @@ _cukinia_mount()
 
 	# ensure all mount options are set
 	for term in $options; do
-		if echo $result | grep -qw "$term"; then
+		if echo "$result" | grep -qw "$term"; then
 			found=$((found + 1))
 		fi
 	done
@@ -295,7 +300,7 @@ _cukinia_mount()
 _colorize()
 {
 	local color="$1"; shift
-	local text="$@"
+	local text="$*"
 	local nc='\033[0m'
 	local c
 
