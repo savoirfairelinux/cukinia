@@ -341,7 +341,7 @@ _colorize()
 	printf "${c}${text}${nc}"
 }
 
-# cukinia_run_dir: run all tests file in $1
+# _cukinia_run_dir: run all tests file in $1
 _cukinia_run_dir()
 {
 	local dir="$1"
