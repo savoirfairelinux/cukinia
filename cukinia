@@ -14,6 +14,7 @@ CUKINIA_CONF='/etc/cukinia/cukinia.conf'
 # Generic user functions templated to _cukinia_xxx()
 GENERIC_FUNCTS='cmd
 		http_request
+		listen4
 		mount
 		process
 		python_pkg
@@ -262,6 +263,45 @@ _cukinia_symlink()
 	local target="$2"
 	_cukinia_prepare "Checking link \"$link\" points to \"$target\""
 	[ "$(readlink "$link")" = "$target" ] && return 0 || return 1
+}
+
+# _cukinia_listen4: check for a locally bound ipv4 port
+# arg1: proto (tcp,udp,any)
+# arg2: local port# (numeric)
+_cukinia_listen4()
+{
+	local proto="$1"
+	local port="$2"
+	local opts="ln"
+	local re
+
+	case "$proto" in
+	tcp)
+		opts="${opts}t"
+		re="tcp"
+		;;
+	udp)
+		opts="${opts}u"
+		re="udp"
+		;;
+	any)
+		opts="${opts}tu"
+		re="tcp|udp"
+		;;
+	esac
+
+	_cukinia_prepare "Checking $re v4 port \"$port\" is open"
+
+	netstat -$opts | awk '
+		BEGIN {
+		    ret = 1;
+		}
+		$1 ~ /^('$re')$/ && $4 ~ /:'$port'$/ {
+		    ret = 0;
+		}
+		END {
+		    exit ret;
+	    	}'
 }
 
 # _cukinia_mount: check for a specific mount point

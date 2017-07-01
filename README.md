@@ -39,6 +39,7 @@ A cukinia config file supports the following statements:
 * ``cukinia_test <expr>``: Validates that test(1) expression is true
 * ``cukinia_http_request <url>``: Validates that url returns a 200 code
 * ``cukinia_cmd <command>``: Validates that arbitrary command returns true
+* ``cukinia_listen4 <proto> <port>``: Validates that tcp/udp port is open locally
 * ``cukinia_mount <source> <mount point> [options]``: Validate the
   presence of a mount on the system
 * ``cukinia_symlink <link> <target>``: Validate the target of a symlink
@@ -86,6 +87,10 @@ cukinia_run_dir /etc/cukinia/myapp1.d/
 
 # Check for root mounting point on / in read write mode
 cukinia_mount sysfs /sys rw
+
+# Check for ssh and dns servers
+cukinia_listen4 tcp 22
+cukinia_listen4 udp 53
 
 # Check the link interfaces point to /tmp/interfaces
 cukinia_symlink /etc/network/interfaces /tmp/interfaces
