@@ -307,23 +307,33 @@ _cukinia_listen4()
 # _cukinia_mount: check for a specific mount point
 # arg1: the device
 # arg2: the mountpoint
+# arg3: (optional) the filesystem type (eg. ext4), or "any"
 # arg@: (optional) a list of options to look for
 _cukinia_mount()
 {
 	local device="$1"
 	local mountpoint="$2"
 	shift 2
+	local fstype="$1"; shift
 	local options="$*"
 	local found=0
 	local result
 
-	_cukinia_prepare "Checking mount: $device on $mountpoint with ${options:-any} options"
+	_cukinia_prepare "Checking mount: $device on $mountpoint type ${fstype:-any} (${options:-any})"
 
-	result=$(awk ' $1=="'$device'" && $2=="'$mountpoint'" { print $4 }' /proc/mounts | uniq)
+	# use fstype as an awk regex if present
+	if [ "$fstype" = "any" ] || [ -z "$fstype" ]; then
+		fstype=".*"
+	fi
+
+	result=$(awk '
+		$1 == "'$device'" && $2 == "'$mountpoint'" && $3 ~ /^'$fstype'$/ {
+			print $4;
+		}' /proc/mounts | uniq)
 
 	[ -n "$result" ] || return 1
 
-	# ensure all mount options are set
+	# ensure all expected mount options are set
 	for term in $options; do
 		if echo "$result" | grep -qw "$term"; then
 			found=$((found + 1))
