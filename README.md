@@ -40,7 +40,7 @@ A cukinia config file supports the following statements:
 * ``cukinia_http_request <url>``: Validates that url returns a 200 code
 * ``cukinia_cmd <command>``: Validates that arbitrary command returns true
 * ``cukinia_listen4 <proto> <port>``: Validates that tcp/udp port is open locally
-* ``cukinia_mount <source> <mount point> [options]``: Validate the
+* ``cukinia_mount <source> <mount point> [fstype] [options]``: Validate the
   presence of a mount on the system
 * ``cukinia_symlink <link> <target>``: Validate the target of a symlink
 * ``not``: Can prefix any test to invert the issue it will produce
@@ -85,8 +85,9 @@ as "Checking webapp" cukinia_http_request http://localhost:8080/sanitycheck
 # Run executable tests for myapp1
 cukinia_run_dir /etc/cukinia/myapp1.d/
 
-# Check for root mounting point on / in read write mode
-cukinia_mount sysfs /sys rw
+# Check for misc. mount points
+cukinia_mount sysfs /sys
+cukinia_mount /dev/sda1 /boot ext4 rw sync
 
 # Check for ssh and dns servers
 cukinia_listen4 tcp 22
