@@ -8,7 +8,7 @@ cukinia_process Xorg
 cukinia_process nginx www-data
 cukinia_python_pkg math
 cukinia_http_request www.google.com
-cukinia_mount sysfs /sys rw
+cukinia_mount sysfs /sys sysfs rw
 cukinia_symlink /etc/network/interfaces /tmp/interfaces
 
 
