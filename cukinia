@@ -22,7 +22,60 @@ GENERIC_FUNCTS='cmd
 		test
 		user'
 
-# Take config file as first argument
+# Default log file set to stderr
+__log_file="&2"
+
+# Standard POSIX help message
+usage() {
+	printf \
+"
+NAME:
+	cukinia - portable firmware validation test framework
+
+USAGE:
+	cukinia [options] [cukinia_conf_file_path]
+
+OPTIONS:
+	-h, --help	display this message
+	-o <path>	output results to file at <path>
+	-f <format>	set output format to <format>, currently supported:
+   			csv.
+"
+}
+
+# Parse single character options (sh builtin does not support long options)
+while getopts ":hvo:f:-:" opt; do
+	case $opt in
+	o)
+		__log_file=$OPTARG
+		;;
+	f)
+		__log_format=$OPTARG
+		;;
+	h)
+		usage
+		exit 0
+		;;
+	#long options expantion (options without parameter only)
+	-)
+		case $OPTARG in
+		help)
+			usage
+			exit 0
+			;;
+		*)
+			printf "cukinia: $OPTARG: unsupported long option\n"
+			;;
+		esac
+		;;
+	*)
+		printf "cukinia: $OPTARG: unsupported short option\n"
+		;;
+	esac
+done
+shift $((OPTIND-1))
+
+# Take config file as first trailing argument
 if [ -r "$1" ]; then
 	CUKINIA_CONF="$1"
 	if [ "$(dirname "$CUKINIA_CONF")" = "." ]; then
