@@ -75,6 +75,16 @@ while getopts ":hvo:f:-:" opt; do
 done
 shift $((OPTIND-1))
 
+# Init logging
+case "$__log_format" in
+csv)
+	echo "TEST MESSAGE, RESULT" >"$__log_file"
+	;;
+*)
+	: >"$__log_file"
+	;;
+esac
+
 # Take config file as first trailing argument
 if [ -r "$1" ]; then
 	CUKINIA_CONF="$1"
@@ -127,7 +137,20 @@ logging()
 # cukinia_log: log arguments to stdout
 cukinia_log()
 {
-	echo "${__log_pfx}$*"
+	local message=$1
+	local result=$2
+
+	case ${__log_format} in
+	csv)
+		if [ -n "$result" ]; then
+			# Escape single quotes in test message to avoid commas detection
+			echo "'${1/\'/\\\'}',$2" >>"$__log_file"
+		fi
+		;;
+	*)
+		echo "${__log_pfx}$*"
+		;;
+	esac
 }
 
 # run the test and its context
@@ -250,7 +273,14 @@ _cukinia_result()
 		;;
 	esac
 
-	cukinia_log "[$result] $__cukinia_cur_test"
+	case "$__log_format" in
+	csv)
+		cukinia_log "$__cukinia_cur_test" "$result"
+		;;
+	*)
+		cukinia_log "[$result] $__cukinia_cur_test"
+		;;
+	esac
 }
 
 # _cukinia_cmd: wrapper to any command
