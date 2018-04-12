@@ -407,10 +407,15 @@ _colorize()
 	local nc='\033[0m'
 	local c
 
+	if [ -n "$__log_format" ] || [ "$__log_file" != "/dev/stdout" ]; then
+		printf "%s" "$text"
+		return
+	fi
+
 	# Only colorize a few terminal types
 	case "$TERM" in
 	linux*|xterm*|vt102)
-		;;
+	;;
 	*)
 		echo "$@"
 		return
