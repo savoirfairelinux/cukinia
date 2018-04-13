@@ -23,7 +23,7 @@ GENERIC_FUNCTS='cmd
 		user'
 
 # Default log file set to stderr
-__log_file="&2"
+__log_file="/dev/stdout"
 
 # Standard POSIX help message
 usage() {
@@ -140,7 +140,7 @@ cukinia_log()
 	local message=$1
 	local result=$2
 
-	case ${__log_format} in
+	case "$__log_format" in
 	csv)
 		if [ -n "$result" ]; then
 			# Escape single quotes in test message to avoid commas detection
@@ -148,7 +148,7 @@ cukinia_log()
 		fi
 		;;
 	*)
-		echo "${__log_pfx}$*"
+		echo "${__log_pfx}$*" >>"$__log_file"
 		;;
 	esac
 }
