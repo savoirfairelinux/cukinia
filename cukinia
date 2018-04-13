@@ -262,7 +262,7 @@ _cukinia_symlink()
 	local link="$1"
 	local target="$2"
 	_cukinia_prepare "Checking link \"$link\" points to \"$target\""
-	[ "$(readlink -f "$link")" = "$target" ] && return 0 || return 1
+	[ "$(readlink -f "$link")" = "$(readlink -f "$target")" ] && return 0 || return 1
 }
 
 # _cukinia_listen4: check for a locally bound ipv4 port
