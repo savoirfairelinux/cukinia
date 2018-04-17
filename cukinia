@@ -2,7 +2,7 @@
 #
 # Cukinia a firmware validation framework
 #
-# Copyright (C) 2017 Savoir-faire Linux Inc.
+# Copyright (C) 2017-2018 Savoir-faire Linux Inc.
 #
 # This program is free software, distributed under the Apache License
 # version 2.0, as well as the GNU General Public License version 3, at
@@ -22,25 +22,25 @@ GENERIC_FUNCTS='cmd
 		test
 		user'
 
-# Default log file set to stderr
+# By default log to stdout
 __log_file="/dev/stdout"
 
-# Standard POSIX help message
-usage() {
-	printf \
-"
+# Standard help message
+usage()
+{
+	cat <<EOF
 NAME:
 	cukinia - portable firmware validation test framework
 
 USAGE:
-	cukinia [options] [cukinia_conf_file_path]
+	cukinia [options] [config file]
 
 OPTIONS:
 	-h, --help	display this message
-	-o <path>	output results to file at <path>
+	-o <file>	output results to <file>
 	-f <format>	set output format to <format>, currently supported:
    			csv.
-"
+EOF
 }
 
 # Parse single character options (sh builtin does not support long options)
@@ -56,7 +56,7 @@ while getopts ":hvo:f:-:" opt; do
 		usage
 		exit 0
 		;;
-	#long options expantion (options without parameter only)
+	# long options expantion (options without parameter only)
 	-)
 		case $OPTARG in
 		help)
@@ -445,7 +445,7 @@ _colorize()
 	# Only colorize a few terminal types
 	case "$TERM" in
 	linux*|xterm*|vt102)
-	;;
+		;;
 	*)
 		echo "$@"
 		return
