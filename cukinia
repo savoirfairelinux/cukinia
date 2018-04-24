@@ -144,6 +144,8 @@ cukinia_log()
 	csv)
 		case "$result" in
 		PASS|FAIL)
+			# Escape single quotes in test message to avoid commas detection
+			message=$(sed -e "s/'/\\\'/g" <<< "$message")
 			echo "'$message',$result" >>"$__log_file"
 			;;
 		*)
