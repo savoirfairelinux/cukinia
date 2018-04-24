@@ -142,10 +142,13 @@ cukinia_log()
 
 	case "$__log_format" in
 	csv)
-		if [ -n "$result" ]; then
-			# Escape single quotes in test message to avoid commas detection
-			echo "'${1/\'/\\\'}',$2" >>"$__log_file"
-		fi
+		case "$result" in
+		PASS|FAIL)
+			echo "'$message',$result" >>"$__log_file"
+			;;
+		*)
+			;;
+		esac
 		;;
 	*)
 		echo "${__log_pfx}$*" >>"$__log_file"
