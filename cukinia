@@ -137,20 +137,15 @@ logging()
 # cukinia_log: log arguments to stdout
 cukinia_log()
 {
-	local message=$1
-	local result=$2
+	local message="$1"
+	local result="$2"
 
 	case "$__log_format" in
 	csv)
-		case "$result" in
-		PASS|FAIL)
-			# Escape single quotes in test message to avoid commas detection
-			message=$(echo $message | sed -e "s/'/\\\'/g")
+		if [ "$result" = "PASS" ] || [ "$result" = "FAIL" ]; then
+			message=$(echo $message | sed -e "s/'/\\\'/g") # ' -> \'
 			echo "'$message',$result" >>"$__log_file"
-			;;
-		*)
-			;;
-		esac
+		fi
 		;;
 	*)
 		echo "${__log_pfx}$*" >>"$__log_file"
