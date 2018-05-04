@@ -44,7 +44,7 @@ EOF
 }
 
 # Parse single character options (sh builtin does not support long options)
-while getopts ":hvo:f:-:" opt; do
+while getopts ":hvo:f:A:-:" opt; do
 	case $opt in
 	o)
 		__log_file=$OPTARG
@@ -166,7 +166,14 @@ cukinia_runner()
 	fi
 	ret=$?
 
+	if [ -n "$CUKINIA_ALWAYS_PASS" ]; then
+		__not="pass"
+	fi
+
 	case "$__not..$ret" in
+	pass..*)
+		_cukinia_result PASS
+		;;
 	1..0)
 		_cukinia_result FAIL
 		cukinia_failures=$((cukinia_failures + 1))

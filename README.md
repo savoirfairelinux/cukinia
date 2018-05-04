@@ -62,6 +62,10 @@ A cukinia config file supports the following statements:
 * ``$cukinia_tests``: number of tests attempted
 * ``$cukinia_failures``: number of tests that failed
 
+### Environment variables
+
+* ``$CUKINIA_ALWAYS_PASS``: if set, every test will succeed
+
 ### Example cukinia.conf
 
 ```shell
