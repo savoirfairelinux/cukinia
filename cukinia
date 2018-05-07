@@ -40,6 +40,7 @@ OPTIONS:
 	-o <file>	output results to <file>
 	-f <format>	set output format to <format>, currently supported:
    			csv.
+	--no-header	do not print headers in concerned output formats
 EOF
 }
 
@@ -63,6 +64,9 @@ while getopts ":hvo:f:A:-:" opt; do
 			usage
 			exit 0
 			;;
+		no-header)
+			__no_header=1
+			;;
 		*)
 			printf "cukinia: $OPTARG: unsupported long option\n"
 			;;
@@ -78,7 +82,9 @@ shift $((OPTIND-1))
 # Init logging
 case "$__log_format" in
 csv)
-	echo "TEST MESSAGE, RESULT" >"$__log_file"
+	if [ -z "$__no_header" ]; then
+		echo "TEST MESSAGE, RESULT" >"$__log_file"
+	fi
 	;;
 *)
 	: >"$__log_file"
