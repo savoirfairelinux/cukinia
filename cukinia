@@ -84,6 +84,8 @@ case "$__log_format" in
 csv)
 	if [ -z "$__no_header" ]; then
 		echo "TEST MESSAGE, RESULT" >"$__log_file"
+	else
+		: >"$__log_file"
 	fi
 	;;
 *)
