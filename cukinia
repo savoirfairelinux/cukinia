@@ -25,6 +25,21 @@ GENERIC_FUNCTS='cmd
 # By default log to stdout
 __log_file="/dev/stdout"
 
+# Temporarty files
+__logfile_tmp=$(mktemp)
+__stderr_tmp=$(mktemp)
+__stdout_tmp=$(mktemp)
+
+
+# Ensure cleanup of temporary files
+trap cleanup 0
+
+# Cleanup of temporary files
+cleanup()
+{
+	rm -f "$__stderr_tmp" "$__stdout_tmp" "$__logfile_tmp" "$__junitfile_tmp"
+}
+
 # Standard help message
 usage()
 {
@@ -39,7 +54,7 @@ OPTIONS:
 	-h, --help	display this message
 	-o <file>	output results to <file>
 	-f <format>	set output format to <format>, currently supported:
-   			csv.
+       			csv, junitxml
 	--no-header	do not print headers in concerned output formats
 EOF
 }
@@ -80,16 +95,26 @@ done
 shift $((OPTIND-1))
 
 # Init logging
+cukinia_epoch=$(date +%s)
 case "$__log_format" in
 csv)
 	if [ -z "$__no_header" ]; then
-		echo "TEST MESSAGE, RESULT" >"$__log_file"
+		echo "TEST MESSAGE, RESULT" >"$__logfile_tmp"
 	else
-		: >"$__log_file"
+		: >"$__logfile_tmp"
 	fi
 	;;
+
+junitxml)
+	if [ "$__log_file" = "/dev/stdout" ]; then
+		usage
+		echo "Fatal: junitxml requires -o <file>"
+		exit 1
+	fi
+	;;
+
 *)
-	: >"$__log_file"
+	: >"$__logfile_tmp"
 	;;
 esac
 
@@ -152,11 +177,18 @@ cukinia_log()
 	csv)
 		if [ "$result" = "PASS" ] || [ "$result" = "FAIL" ]; then
 			message=$(echo $message | sed -e "s/'/\\\'/g") # ' -> \'
-			echo "'$message',$result" >>"$__log_file"
+			echo "'$message',$result" >>"$__logfile_tmp"
 		fi
 		;;
+
+	junitxml)
+		if [ "$result" = "PASS" ] || [ "$result" = "FAIL" ]; then
+			_junitxml_add "$message" "$result"
+		fi
+		;;
+
 	*)
-		echo "${__log_pfx}$*" >>"$__log_file"
+		echo "${__log_pfx}$*" >>"$__logfile_tmp"
 		;;
 	esac
 }
@@ -289,7 +321,7 @@ _cukinia_result()
 	esac
 
 	case "$__log_format" in
-	csv)
+	csv|junitxml)
 		cukinia_log "$__cukinia_cur_test" "$result"
 		;;
 	*)
@@ -442,6 +474,67 @@ _cukinia_mount()
 	return 0
 }
 
+# Print elapsed time since cukinia startup
+_time_elapsed()
+{
+	local now=$(date +%s)
+
+	echo $((now - cukinia_epoch))
+}
+
+# Create junit-xml header
+_junitxml_start()
+{
+	cat <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites failures="$cukinia_failures" name="cukinia" tests="$cukinia_tests" time="$(_time_elapsed)" timestamp="$(date +%s)">
+EOF
+}
+
+# Create junit-xml footer
+_junitxml_end()
+{
+	echo "</testsuites>"
+}
+
+# Add a junit-xml entry
+_junitxml_add()
+{
+	local message="$1"
+	local result="$2"
+	local failure
+	local err_output
+	local std_output
+
+	local name=$(echo $message | sed -e 's/"/\&quot;/g') # " -> &quot;
+
+	cat >> "$__logfile_tmp" <<EOF
+  <testcase classname="theclass" name="$name" time="$(_time_elapsed)" timestamp="$(date +%s)">
+EOF
+
+	if [ "$result" != "PASS" ]; then
+		cat >> "$__logfile_tmp" <<EOF
+    <failure message="failed"><![CDATA[$message: FAIL]]></failure>
+EOF
+	fi
+
+	if [ -s "$__stderr_tmp" ]; then
+		cat >> "$__logfile_tmp" <<EOF
+    <system-err><![CDATA[$(cat $__stderr_tmp)]]></system-err>
+EOF
+	fi
+
+	if [ -s "$__stdout_tmp" ]; then
+		cat >> "$__logfile_tmp" <<EOF
+    <system-out><![CDATA[$(cat $__stdout_tmp)]]></system-out>
+EOF
+	fi
+
+	cat >> "$__logfile_tmp" <<EOF
+  </testcase>
+EOF
+}
+
 # _colorize: return colorized string
 # arg1: color name
 # arg2..: string
@@ -514,7 +607,11 @@ for func in $GENERIC_FUNCTS; do
 	eval "$(cat <<EOF
 cukinia_$func()
 {
-	cukinia_runner _cukinia_$func "\$@"
+      if [ "$__log_format" = "junitxml" ]; then
+          cukinia_runner _cukinia_$func "\$@" 1>$__stdout_tmp 2>$__stderr_tmp
+      else
+          cukinia_runner _cukinia_$func "\$@"
+      fi
 }
 EOF
 )"
@@ -523,5 +620,19 @@ done
 cukinia_tests=0
 cukinia_failures=0
 cukinia_conf_include "$CUKINIA_CONF"
+
+# Finish logging
+case "$__log_format" in
+junitxml)
+	__junitfile_tmp=$(mktemp)
+	_junitxml_start >"$__junitfile_tmp"
+	cat "$__logfile_tmp" >> "$__junitfile_tmp"
+	_junitxml_end >> "$__junitfile_tmp"
+	cat "$__junitfile_tmp" > "$__log_file".xml
+	;;
+*)
+	cat "$__logfile_tmp" > "$__log_file"
+	;;
+esac
 
 [ $cukinia_failures -eq 0 ] && exit 0 || exit 1
