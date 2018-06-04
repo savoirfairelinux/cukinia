@@ -1,7 +1,7 @@
 # Cukinia firmware validation framework
 
 Cukinia is designed to help Linux-based embedded firmware developers
-run simple validation tests on their firmware.
+run simple system-level validation tests on their firmware.
 
 Cukinia integrates well with embedded firmware generation frameworks
 such as Buildroot and Yocto, and can be run manually or by your
@@ -13,11 +13,19 @@ Cukinia works if it offers the following value:
 
 * It is very simple to use
 * It requires no dependencies other than busybox
+* It integrates easily with CI/CD pipelines
 * It helps developers creating better software
 
 ## Usage
 
-``cukinia [config file]``
+``cukinia [options] [config file]``
+
+Useful options:
+
+* `-f junitxml`: format results as JUnit XML (useful for Jenkins & others)
+* `-f csv`: format results as CSV text
+** `--no-header`: omit CSV header line
+* `-o file`: output results to file instead of stdout
 
 ## Screenshot
 
