@@ -24,7 +24,7 @@ Useful options:
 
 * `-f junitxml`: format results as JUnit XML (useful for Jenkins & others)
 * `-f csv`: format results as CSV text
-** `--no-header`: omit CSV header line
+    * `--no-header`: omit CSV header line
 * `-o file`: output results to file instead of stdout
 
 ## Screenshot
