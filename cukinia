@@ -193,6 +193,18 @@ cukinia_log()
 	esac
 }
 
+ver2int() {                                                                     
+    	local IFS=.                                                                 
+	local version_str=$1                                                        
+	local res=0                                                                 
+	local fac=16                                                                
+	for v in $version_str; do                                                   
+        	res=$((res + $v << $fac))                                               
+		fac=$((fac / 2))                                                        
+    	done                                                                        
+	echo $res                                                                   
+} 
+
 # run the test and its context
 # arg1..n: command to run and their arguments
 cukinia_runner()
