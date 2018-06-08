@@ -20,7 +20,8 @@ GENERIC_FUNCTS='cmd
 		python_pkg
 		symlink
 		test
-		user'
+		user
+		cmp_version'
 
 # By default log to stdout
 __log_file="/dev/stdout"
@@ -192,6 +193,18 @@ cukinia_log()
 		;;
 	esac
 }
+
+ver2int() {                                                                     
+    local IFS=.                                                                 
+	local version_str=$1                                                        
+	local res=0                                                                 
+	local fac=16                                                                
+	for v in $version_str; do                                                   
+        res=$((res + $v << $fac))                                               
+		fac=$((fac / 2))                                                        
+    done                                                                        
+	echo $res                                                                   
+} 
 
 # run the test and its context
 # arg1..n: command to run and their arguments
@@ -472,6 +485,47 @@ _cukinia_mount()
 
 	[ "$found" -eq "$#" ] || return 1
 	return 0
+}
+
+# _cukinia_cmp_version: compare two versions
+# arg1: the version to test
+# arg2: the minimal version
+_cukinia_cmp_version()
+{
+	local ver1="$1"
+	local ver2="$2"
+	_cukinia_prepare "Compare version $ver1 and $ver2"
+	sep="\."
+
+	nb_sep_v1=`echo $ver1 | grep -o "$sep" | wc -l`
+	nb_sep_v2=`echo $ver2 | grep -o "$sep" | wc -l`
+
+	# normalize version
+	if (("$nb_sep_v1" > "$nb_sep_v2")); then
+		diff=$((nb_sep_v1-nb_sep_v2))
+		for i in $diff; do
+		   ver2=$ver2".0"
+		done
+    elif (("$nb_sep_v2" > "$nb_sep_v1")); then
+		diff=$((nb_sep_v2-nb_sep_v1))
+		for i in $diff; do
+		   ver1=$ver1".0"
+		done
+	fi
+
+	# compare the version
+	# strings are identical
+	if [ "$ver1" = "$ver2" ]; then
+			return 0;
+	fi
+
+	# sort version and check if vers1 is the mininal one
+	min_version=`echo -e "$ver1\n$ver2" | sort -V | head -n1`
+	if [ "$ver1" == "$min_version" ]; then
+			return 1;
+	else
+			return 0;
+	fi
 }
 
 # Print elapsed time since cukinia startup
