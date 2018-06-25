@@ -363,16 +363,29 @@ _cukinia_process()
 {
 	local pname="$1"
 	local puser="$2"
-	local ret
+	local puser_uid
 
 	_cukinia_prepare "Checking process \"$pname\" as ${puser:-any user}"
-	ret=$(ps -a -o user,comm |
-			awk '($2 == "'$pname'") && ($1 ~ /^'${puser:-.*}'$/) {
-			    print;
-			}')
-	[ -n "$ret" ] && return 0 || return 1
-}
 
+	if [ -n "$puser" ]; then
+		if ! puser_uid="$(id -u "$puser" 2>/dev/null)" ; then
+			return 1
+		fi
+	fi
+
+	# loop in /proc to get process name and optionally process owner
+	for status in /proc/[0-9]*/status; do
+		# check by process name
+		[ "$(grep Name "$status" | cut -f 2)" = "$pname" ] || continue
+
+		# check optional process owner
+		if [ -z "$puser" ] || [ "$(grep Uid "$status" | cut -f 2)" = "$puser_uid" ]; then
+			return 0
+		fi
+	done
+
+	return 1
+}
 
 # cukinia_http_request: test the request using wget and wait for a return.
 # arg1: url
