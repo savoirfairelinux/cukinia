@@ -25,7 +25,7 @@ GENERIC_FUNCTS='cmd
 # By default log to stdout
 __log_file="/dev/stdout"
 
-# Temporarty files
+# Temporary files
 __logfile_tmp=$(mktemp)
 __stderr_tmp=$(mktemp)
 __stdout_tmp=$(mktemp)
