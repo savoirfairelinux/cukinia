@@ -176,7 +176,7 @@ cukinia_log()
 	case "$__log_format" in
 	csv)
 		if [ "$result" = "PASS" ] || [ "$result" = "FAIL" ]; then
-			message=$(echo $message | sed -e "s/'/\\\'/g") # ' -> \'
+			message=$(echo $message | sed -e "s/'/\\'/g") # ' -> \'
 			echo "'$message',$result" >>"$__logfile_tmp"
 		fi
 		;;
@@ -519,7 +519,13 @@ _junitxml_add()
 	local err_output
 	local std_output
 
-	local name=$(echo $message | sed -e 's/"/\&quot;/g') # " -> &quot;
+	# escape all forbidden chars in xml {", ', <, >, &}
+	local name=$(echo $message |
+					 sed -e "s/&/&amp;/g;
+					 s/'/\&apos;/g;
+					 s/\"/\&quot;/g;
+					 s/</\&lt;/g;
+					 s/>/\&gt;/g;")
 
 	cat >> "$__logfile_tmp" <<EOF
   <testcase classname="theclass" name="$name" time="$(_time_elapsed)" timestamp="$(date +%s)">
