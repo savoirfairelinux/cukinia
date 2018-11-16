@@ -628,7 +628,7 @@ _cukinia_run_dir()
 _ver2int() {
 	echo "$1" | awk '{
 	   split($1, version_a, ".");
-	   print version_a[1] * 10^12 + version_a[2] * 10^8 +
+	   print version_a[1] * 10^12 + version_a[2] * 10^8 + \
 	   	 version_a[3] * 1^4 + version_a[4];
 	}'
 }
