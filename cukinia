@@ -298,7 +298,7 @@ _cukinia_python_pkg()
 # arg1: description of test
 _cukinia_prepare()
 {
-	__cukinia_cur_test="${__deco:-${1}}${__not:+ (is false)}"
+	__cukinia_cur_test="${__deco:-${1}}${__not:+ (negated with not)}"
 }
 
 # _cukinia_result: display test result
