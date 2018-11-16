@@ -31,7 +31,11 @@ trap cleanup 0
 # Cleanup of temporary files
 cleanup()
 {
-	rm -f "$__stderr_tmp" "$__stdout_tmp" "$__logfile_tmp" "$__junitfile_tmp"
+	rm -f $__stderr_tmp $__stdout_tmp $__logfile_tmp $__junitfile_tmp
+
+	if [ -n "$__logfile_tmp" ]; then
+		rm -f $__logfile_tmp.*
+	fi
 }
 
 # Standard help message
@@ -150,12 +154,26 @@ cukinia_conf_include()
 
 # logging: change log string format
 # args: prefix "str" - prefix logs with "str"
+# args: class "str" - sets classname for junitxml results
+# args: suite "str" - sets testsuite for junitxml results
 logging()
 {
 	case "$1" in
 	prefix)
 		shift
 		__log_pfx="$*"
+		;;
+	class)
+		if [ "$__log_format" = "junitxml" ]; then
+			shift
+			__log_class="$*"
+		fi
+		;;
+	suite)
+		if [ "$__log_format" = "junitxml" ]; then
+			shift
+			_junitxml_add_suite "$1"
+		fi
 		;;
 	*)
 		cukinia_log "logging: invalid parameter"
@@ -182,7 +200,7 @@ cukinia_log()
 
 	junitxml)
 		if [ "$result" = "PASS" ] || [ "$result" = "FAIL" ]; then
-			_junitxml_add "$message" "$result"
+			_junitxml_add_case "$message" "$result"
 		fi
 		;;
 
@@ -495,64 +513,163 @@ _time_elapsed()
 }
 
 # Create junit-xml header
+# arg1: path to output file
 _junitxml_start()
 {
-	cat <<EOF
+	local outfile="$1"
+
+	cat >$outfile <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuites failures="$cukinia_failures" name="cukinia" tests="$cukinia_tests" time="$(_time_elapsed)" timestamp="$(date +%s)">
+<testsuites>
 EOF
 }
 
 # Create junit-xml footer
+# arg1: outfile
 _junitxml_end()
 {
-	echo "</testsuites>"
+	local outfile="$1"
+
+	# close the current testsuite if needed
+	if [ -n "$__current_suite" ]; then
+		_junitxml_end_suite $outfile
+	fi
+
+	echo "</testsuites>" >>$outfile
 }
 
-# Add a junit-xml entry
+# End the current junit-xml testsuite
+# arg1: output file for the <testsuite> block
+_junitxml_end_suite()
+{
+	local name=$__current_suite
+	local outfile="$1"
+	local timestamp
+	local failures
+	local seconds
+	local errors
+	local tests
+	local start
+	local stop
+
+	if [ -z "$name" ]; then
+		return 1
+	fi
+
+	eval timestamp=\$__suite_${name}_timestamp
+	eval failures=\$__suite_${name}_failures
+	eval errors=\$__suite_${name}_errors
+	eval tests=\$__suite_${name}_tests
+
+	start=$(date -d $timestamp +%s)
+	stop=$(date +%s)
+	seconds=$((stop - start))
+
+	# append the whole testsuite block to the outfile
+	cat >>$outfile <<EOF
+  <testsuite name="$name" package="$name" errors="$errors" tests="$tests" failures="$failures" timestamp="$timestamp" time="$seconds">
+EOF
+	cat $__logfile_tmp.$name >>$outfile
+	rm -f $__logfile_tmp.$name
+	echo "  </testsuite>" >>$outfile
+
+	unset __current_suite
+}
+
+# Start a new <testsuite> section
+# arg1: name of the test suite ([a-zA-Z0-9_]+)
+_junitxml_add_suite()
+{
+	local name="$1"
+
+	# strip the name from any fancy character
+	name="$(echo $name | sed -e 's/[^a-zA-Z0-9_]//g')"
+
+	if [ -z "$name" ]; then
+		return 1
+	fi
+
+	# we should not add an already existing suite name
+	if echo $__suite_list | grep -qw "$name"; then
+		return 1
+	fi
+
+	# close the previous suite if adding a new one
+	if [ -n "$__suite_list" ]; then
+		_junitxml_end_suite $__logfile_tmp
+	fi
+
+	__current_suite="$name"
+
+	# append this test suite to our list
+	__suite_list="$__suite_list $name"
+
+	# suite properties
+	eval __suite_${name}_tests=0
+	eval __suite_${name}_errors=0
+	eval __suite_${name}_failures=0
+	eval __suite_${name}_timestamp=$(date +%Y-%m-%dT%H:%M:%S)
+}
+
+# Add a junit-xml testcase entry
 # arg1: text description for that test
 # arg2: test result (PASS or FAIL)
-_junitxml_add()
+_junitxml_add_case()
 {
 	local message="$1"
 	local result="$2"
-	local failure
-	local err_output
-	local std_output
+	local logfile
+	local varname
+	local suite
+	local name
+
+	# ensure testcase runs in a default test suite
+	if [ -z "$__current_suite" ]; then
+		_junitxml_add_suite default # sets $__current_suite
+	fi
+
+	suite="$__current_suite"
+	logfile="$__logfile_tmp.$suite"
 
 	# escape all forbidden chars in xml {", ', <, >, &}
-	local name=$(echo $message |
-					 sed -e "s/&/&amp;/g;
-					 s/'/\&apos;/g;
-					 s/\"/\&quot;/g;
-					 s/</\&lt;/g;
-					 s/>/\&gt;/g;")
+	name=$(echo $message | sed -e "
+			 s/&/&amp;/g;
+			 s/'/\&apos;/g;
+			 s/\"/\&quot;/g;
+			 s/</\&lt;/g;
+			 s/>/\&gt;/g;")
 
-	cat >>"$__logfile_tmp" <<EOF
-  <testcase classname="theclass" name="$name" time="$(_time_elapsed)" timestamp="$(date +%s)">
+	# tests++
+	varname="__suite_${suite}_tests"
+	eval "$varname=\$(($varname + 1))"
+
+	cat >>$logfile <<EOF
+    <testcase classname="${__log_class:-cukinia}" name="$name" time="0">
 EOF
 
 	if [ "$result" != "PASS" ]; then
-		cat >>"$__logfile_tmp" <<EOF
-    <failure message="failed"><![CDATA[$message: FAIL]]></failure>
+		# failures++
+		varname="__suite_${suite}_failures"
+		eval "$varname=\$(($varname + 1))"
+
+		cat >>$logfile <<EOF
+      <failure type="unit-test" message="failed"><![CDATA[$message: FAIL]]></failure>
 EOF
 	fi
 
 	if [ -s "$__stderr_tmp" ]; then
-		cat >>"$__logfile_tmp" <<EOF
-    <system-err><![CDATA[$(cat $__stderr_tmp)]]></system-err>
+		cat >>$logfile <<EOF
+      <system-err><![CDATA[$(cat $__stderr_tmp)]]></system-err>
 EOF
 	fi
 
 	if [ -s "$__stdout_tmp" ]; then
-		cat >>"$__logfile_tmp" <<EOF
-    <system-out><![CDATA[$(cat $__stdout_tmp)]]></system-out>
+		cat >>$logfile <<EOF
+      <system-out><![CDATA[$(cat $__stdout_tmp)]]></system-out>
 EOF
 	fi
 
-	cat >>"$__logfile_tmp" <<EOF
-  </testcase>
-EOF
+	echo "    </testcase>" >>$logfile
 }
 
 # _colorize: return colorized string
@@ -656,9 +773,9 @@ cukinia_conf_include "$CUKINIA_CONF"
 case "$__log_format" in
 junitxml)
 	__junitfile_tmp=$(mktemp)
-	_junitxml_start >"$__junitfile_tmp"
+	_junitxml_start "$__junitfile_tmp"
 	cat "$__logfile_tmp" >>"$__junitfile_tmp"
-	_junitxml_end >>"$__junitfile_tmp"
+	_junitxml_end "$__junitfile_tmp"
 	cat "$__junitfile_tmp" >"$__log_file"
 	;;
 csv)

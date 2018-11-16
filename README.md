@@ -1,4 +1,4 @@
-# Cukinia firmware validation framework
+# Cukinia - a Linux firmware validation framework
 
 Cukinia is designed to help Linux-based embedded firmware developers
 run simple system-level validation tests on their firmware.
@@ -65,6 +65,8 @@ A cukinia config file supports the following statements:
 ### Logging customization
 
 * ``logging prefix "string"``: prefix logs with "string"
+* ``logging class "string"``: change the junitxml class name to "string" for the next tests
+* ``logging suite "string"``: change the junitxml test suite to "string" for the next tests
 
 ### Useful variables
 
