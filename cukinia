@@ -25,12 +25,6 @@ GENERIC_FUNCTS='cmd
 # By default log to stdout
 __log_file="/dev/stdout"
 
-# Temporary files
-__logfile_tmp=$(mktemp)
-__stderr_tmp=$(mktemp)
-__stdout_tmp=$(mktemp)
-
-
 # Ensure cleanup of temporary files
 trap cleanup 0
 
@@ -93,6 +87,11 @@ while getopts ":hvo:f:A:-:" opt; do
 	esac
 done
 shift $((OPTIND-1))
+
+# Temporary files
+__logfile_tmp=$(mktemp)
+__stderr_tmp=$(mktemp)
+__stdout_tmp=$(mktemp)
 
 # Init logging
 cukinia_epoch=$(date +%s)
@@ -444,7 +443,7 @@ _cukinia_listen4()
 		}
 		END {
 		    exit ret;
-	    	}'
+	    }'
 }
 
 # _cukinia_mount: check for a specific mount point
@@ -487,7 +486,7 @@ _cukinia_mount()
 	return 0
 }
 
-# Print elapsed time since cukinia startup
+# Print elapsed time since cukinia startup (in seconds)
 _time_elapsed()
 {
 	local now=$(date +%s)
@@ -511,6 +510,8 @@ _junitxml_end()
 }
 
 # Add a junit-xml entry
+# arg1: text description for that test
+# arg2: test result (PASS or FAIL)
 _junitxml_add()
 {
 	local message="$1"
@@ -527,29 +528,29 @@ _junitxml_add()
 					 s/</\&lt;/g;
 					 s/>/\&gt;/g;")
 
-	cat >> "$__logfile_tmp" <<EOF
+	cat >>"$__logfile_tmp" <<EOF
   <testcase classname="theclass" name="$name" time="$(_time_elapsed)" timestamp="$(date +%s)">
 EOF
 
 	if [ "$result" != "PASS" ]; then
-		cat >> "$__logfile_tmp" <<EOF
+		cat >>"$__logfile_tmp" <<EOF
     <failure message="failed"><![CDATA[$message: FAIL]]></failure>
 EOF
 	fi
 
 	if [ -s "$__stderr_tmp" ]; then
-		cat >> "$__logfile_tmp" <<EOF
+		cat >>"$__logfile_tmp" <<EOF
     <system-err><![CDATA[$(cat $__stderr_tmp)]]></system-err>
 EOF
 	fi
 
 	if [ -s "$__stdout_tmp" ]; then
-		cat >> "$__logfile_tmp" <<EOF
+		cat >>"$__logfile_tmp" <<EOF
     <system-out><![CDATA[$(cat $__stdout_tmp)]]></system-out>
 EOF
 	fi
 
-	cat >> "$__logfile_tmp" <<EOF
+	cat >>"$__logfile_tmp" <<EOF
   </testcase>
 EOF
 }
@@ -656,12 +657,12 @@ case "$__log_format" in
 junitxml)
 	__junitfile_tmp=$(mktemp)
 	_junitxml_start >"$__junitfile_tmp"
-	cat "$__logfile_tmp" >> "$__junitfile_tmp"
-	_junitxml_end >> "$__junitfile_tmp"
-	cat "$__junitfile_tmp" > "$__log_file"
+	cat "$__logfile_tmp" >>"$__junitfile_tmp"
+	_junitxml_end >>"$__junitfile_tmp"
+	cat "$__junitfile_tmp" >"$__log_file"
 	;;
 *)
-	cat "$__logfile_tmp" > "$__log_file"
+	cat "$__logfile_tmp" >"$__log_file"
 	;;
 esac
 
