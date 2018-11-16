@@ -531,7 +531,7 @@ _junitxml_end()
 	local outfile="$1"
 
 	# close the current testsuite if needed
-	if [ -n "$__current_suite" ]; then
+	if [ -n "$__suite_name" ]; then
 		_junitxml_end_suite $outfile
 	fi
 
@@ -542,7 +542,7 @@ _junitxml_end()
 # arg1: output file for the <testsuite> block
 _junitxml_end_suite()
 {
-	local name=$__current_suite
+	local name=$__suite_name
 	local outfile="$1"
 	local timestamp
 	local failures
@@ -551,17 +551,28 @@ _junitxml_end_suite()
 	local tests
 	local start
 	local stop
+	local ts
 
 	if [ -z "$name" ]; then
 		return 1
 	fi
 
-	eval timestamp=\$__suite_${name}_timestamp
-	eval failures=\$__suite_${name}_failures
-	eval errors=\$__suite_${name}_errors
-	eval tests=\$__suite_${name}_tests
+	# cleanup suite-specific variables
+	timestamp=$__suite_timestamp
+	failures=$__suite_failures
+	errors=$__suite_errors
+	tests=$__suite_tests
+	unset __suite_timestamp
+	unset __suite_failures
+	unset __suite_errors
+	unset __suite_tests
+	unset __suite_name
 
-	start=$(date -d $timestamp +%s)
+
+	# derive suite duration from the timestamp
+	# note: busybox 1.27 'date' may choke on the iso8601 T format
+	ts=$(echo $timestamp | sed -e 's/T/ /')
+	start=$(date -d "$ts" +%s)
 	stop=$(date +%s)
 	seconds=$((stop - start))
 
@@ -572,8 +583,6 @@ EOF
 	cat $__logfile_tmp.$name >>$outfile
 	rm -f $__logfile_tmp.$name
 	echo "  </testsuite>" >>$outfile
-
-	unset __current_suite
 }
 
 # Start a new <testsuite> section
@@ -595,20 +604,20 @@ _junitxml_add_suite()
 	fi
 
 	# close the previous suite if adding a new one
-	if [ -n "$__suite_list" ]; then
+	if [ -n "$__suite_name" ]; then
 		_junitxml_end_suite $__logfile_tmp
 	fi
 
-	__current_suite="$name"
 
 	# append this test suite to our list
 	__suite_list="$__suite_list $name"
 
 	# suite properties
-	eval __suite_${name}_tests=0
-	eval __suite_${name}_errors=0
-	eval __suite_${name}_failures=0
-	eval __suite_${name}_timestamp=$(date +%Y-%m-%dT%H:%M:%S)
+	__suite_name="$name"
+	__suite_tests=0
+	__suite_errors=0
+	__suite_failures=0
+	__suite_timestamp=$(date +%Y-%m-%dT%H:%M:%S)
 }
 
 # Add a junit-xml testcase entry
@@ -624,11 +633,11 @@ _junitxml_add_case()
 	local name
 
 	# ensure testcase runs in a default test suite
-	if [ -z "$__current_suite" ]; then
-		_junitxml_add_suite default # sets $__current_suite
+	if [ -z "$__suite_name" ]; then
+		_junitxml_add_suite default # sets $__suite_name
 	fi
 
-	suite="$__current_suite"
+	suite="$__suite_name"
 	logfile="$__logfile_tmp.$suite"
 
 	# escape all forbidden chars in xml {", ', <, >, &}
@@ -639,18 +648,14 @@ _junitxml_add_case()
 			 s/</\&lt;/g;
 			 s/>/\&gt;/g;")
 
-	# tests++
-	varname="__suite_${suite}_tests"
-	eval "$varname=\$(($varname + 1))"
+	__suite_tests=$((__suite_tests + 1))
 
 	cat >>$logfile <<EOF
     <testcase classname="${__log_class:-cukinia}" name="$name" time="0">
 EOF
 
 	if [ "$result" != "PASS" ]; then
-		# failures++
-		varname="__suite_${suite}_failures"
-		eval "$varname=\$(($varname + 1))"
+		__suite_failures=$((__suite_failures + 1))
 
 		cat >>$logfile <<EOF
       <failure type="unit-test" message="failed"><![CDATA[$message: FAIL]]></failure>
