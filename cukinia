@@ -187,7 +187,7 @@ cukinia_log()
 		;;
 
 	*)
-		echo "${__log_pfx}$*" >>"$__logfile_tmp"
+		echo "${__log_pfx}$*"
 		;;
 	esac
 }
@@ -661,7 +661,7 @@ junitxml)
 	_junitxml_end >>"$__junitfile_tmp"
 	cat "$__junitfile_tmp" >"$__log_file"
 	;;
-*)
+csv)
 	cat "$__logfile_tmp" >"$__log_file"
 	;;
 esac
