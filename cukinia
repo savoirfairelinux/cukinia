@@ -391,14 +391,17 @@ _cukinia_process()
 	fi
 
 	# scan /proc to get process name and optionally process owner
-	for status in /proc/[0-9]*/status; do
-		# check by process name - status limits to 15 chars
-		if [ "$(grep Name "$status" | cut -f2)" != "$(echo $pname | cut -c1-15)" ]; then
+	for dir in /proc/[0-9]*/; do
+		# check by process name
+		local cmdline_nb="$(echo ${pname} | wc -w)"
+		local cmdline="$(cat ${dir}/cmdline | tr "\000" " " | cut -d " " -f -${cmdline_nb})"
+
+		if [ "${cmdline}" != "${pname}" ]; then
 			continue
 		fi
 
 		# check optional process owner
-		if [ -z "$puser" ] || [ "$(grep Uid "$status" | cut -f 2)" = "$puser_uid" ]; then
+		if [ -z "$puser" ] || [ "$(grep Uid "$dir/status" | cut -f 2)" = "$puser_uid" ]; then
 			return 0
 		fi
 	done
