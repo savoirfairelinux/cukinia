@@ -393,7 +393,7 @@ _cukinia_process()
 	# scan /proc to get process name and optionally process owner
 	for status in /proc/[0-9]*/status; do
 		# check by process name - status limits to 15 chars
-		if [ "$(grep Name "$status" | cut -f2)" = "$(echo $pname | cut -c1-15)" ]; then
+		if [ "$(grep Name "$status" | cut -f2)" != "$(echo $pname | cut -c1-15)" ]; then
 			continue
 		fi
 
