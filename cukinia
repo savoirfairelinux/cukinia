@@ -22,7 +22,8 @@ GENERIC_FUNCTS='cmd
 		test
 		user
 		group
-		kmod'
+		kmod
+		kconf'
 
 # By default log to stdout
 __log_file="/dev/stdout"
@@ -406,6 +407,35 @@ _cukinia_kmod()
 
 	_cukinia_prepare "Checking kernel module \"$kmod\" is loaded"
 	grep -q "^$kmod " /proc/modules
+}
+
+# _cukinia_kconf: checks if kernel config option $1 is set as $2
+# arg: $1: kernel configuration symbol name (without the CONFIG_ prefix)
+# arg: $2: the desired setting for $1 option (y, m, n)
+_cukinia_kconf()
+{
+	local ikconfig="/proc/config.gz"
+	local kconf="$1"
+	local kset="$2"
+	local line=""
+
+	if [ ! -e "$ikconfig" ]; then
+		_cukinia_prepare "cukinia_kconf: $ikconfig (CONFIG_IKCONFIG_PROC=y) is required"
+		return 1
+	fi
+
+	_cukinia_prepare "Checking kernel config \"$kconf\" set to \"$kset\""
+
+	case "$kset" in
+	y|m) line="CONFIG_$kconf=$kset" ;;
+	n) line="# CONFIG_$kconf is not set" ;;
+	*)
+		_cukinia_prepare "cukinia_kconf: invalid 2nd argument (use y|m|n)"
+		return 1
+		;;
+	esac
+
+	zcat /proc/config.gz | grep -q "^$line"
 }
 
 # cukinia_process: checks if process $pname runs

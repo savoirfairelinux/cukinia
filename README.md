@@ -44,6 +44,8 @@ A cukinia config file supports the following statements:
 * ``cukinia_user <username>``: Validates that user exists
 * ``cukinia_group <groupname>``: Validates that group exists
 * ``cukinia_kmod <kernel module>``: Validates that kernel module is loaded
+* ``cukinia_kconf <kernel config symbol> <y|m|n>``: Validates that kernel config
+  symbol is set to given tristate value
 * ``cukinia_process <pname> [user]``: Validates that process runs (optional user)
 * ``cukinia_python_pkg <pkg>``: Validates that Python package is installed
 * ``cukinia_test <expr>``: Validates that test(1) expression is true
