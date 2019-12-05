@@ -20,7 +20,8 @@ GENERIC_FUNCTS='cmd
 		python_pkg
 		symlink
 		test
-		user'
+		user
+		group'
 
 # By default log to stdout
 __log_file="/dev/stdout"
@@ -370,6 +371,15 @@ _cukinia_user()
 
 	_cukinia_prepare "Checking user \"$user\""
 	grep -q "^$user:" /etc/passwd
+}
+
+# _cukinia_group: checks if group $1 exists
+_cukinia_group()
+{
+	local group="$1"
+
+	_cukinia_prepare "Checking group \"$group\""
+	grep -q "^$group:" /etc/group
 }
 
 # cukinia_process: checks if process $pname runs
