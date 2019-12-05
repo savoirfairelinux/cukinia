@@ -44,7 +44,12 @@ usage()
 {
 	cat <<EOF
 NAME:
-	cukinia - portable firmware validation test framework
+	Cukinia - portable firmware validation framework.
+	Copyright (C) 2017-2019 Savoir-faire Linux Inc.
+
+	The name means "zucchini" in Polish. It is a nod to Cucumber,
+	another neat test framework.
+
 
 USAGE:
 	cukinia [options] [config file]
@@ -53,7 +58,7 @@ OPTIONS:
 	-h, --help	display this message
 	-o <file>	output results to <file>
 	-f <format>	set output format to <format>, currently supported:
-       			csv, junitxml
+       			csv  junitxml
 	--no-header	do not print headers in concerned output formats
 EOF
 }
@@ -153,7 +158,7 @@ cukinia_conf_include()
 	done
 }
 
-# logging: change log string format
+# logging: change log string options
 # args: prefix "str" - prefix logs with "str"
 # args: class "str" - sets classname for junitxml results
 # args: suite "str" - sets testsuite for junitxml results
@@ -185,7 +190,7 @@ logging()
 	return 0
 }
 
-# cukinia_log: log arguments to stdout
+# cukinia_log: log results to the output media
 cukinia_log()
 {
 	local message="$1"
