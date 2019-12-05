@@ -21,7 +21,8 @@ GENERIC_FUNCTS='cmd
 		symlink
 		test
 		user
-		group'
+		group
+		kmod'
 
 # By default log to stdout
 __log_file="/dev/stdout"
@@ -396,6 +397,15 @@ _cukinia_group()
 
 	_cukinia_prepare "Checking group \"$group\""
 	grep -q "^$group:" /etc/group
+}
+
+# _cukinia_kmod: checks if kernel module $1 is loaded
+_cukinia_kmod()
+{
+	local kmod="$1"
+
+	_cukinia_prepare "Checking kernel module \"$kmod\" is loaded"
+	grep -q "^$kmod " /proc/modules
 }
 
 # cukinia_process: checks if process $pname runs
