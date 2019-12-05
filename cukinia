@@ -365,7 +365,18 @@ _cukinia_cmd()
 # arg1..n: arguments to test(1)
 _cukinia_test()
 {
-	_cukinia_prepare "Running \"test $*\""
+	local desc="Running \"test $*\""
+
+	case "$1" in
+	-f) desc="Checking file \"$2\" exists" ;;
+	-s) desc="Checking file \"$2\" is non-empty" ;;
+	-d) desc="Checking directory \"$2\" exists" ;;
+	-b) desc="Checking \"$2\" exists and is block special" ;;
+	-c) desc="Checking \"$2\" exists and is character special" ;;
+	-L|-h) desc="Checking \"$2\" is a symlink" ;;
+	esac
+
+	_cukinia_prepare "$desc"
 	test "$@"
 }
 
