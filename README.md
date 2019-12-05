@@ -43,6 +43,10 @@ A cukinia config file supports the following statements:
 
 * ``cukinia_user <username>``: Validates that user exists
 * ``cukinia_group <groupname>``: Validates that group exists
+* ``cukinia_file <filename>``: Validates that file exists
+* ``cukinia_dir <directory>``: Validates that directory exists
+* ``cukinia_dev_block <device path>``: Validates that block device exists
+* ``cukinia_dev_char <device path>``: Validates that character device exists
 * ``cukinia_process <pname> [user]``: Validates that process runs (optional user)
 * ``cukinia_python_pkg <pkg>``: Validates that Python package is installed
 * ``cukinia_test <expr>``: Validates that test(1) expression is true
