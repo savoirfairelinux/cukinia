@@ -8,6 +8,8 @@
 # version 2.0, as well as the GNU General Public License version 3, at
 # your own convenience. See LICENSE and LICENSE.GPLv3 for details.
 
+CUKINIA_VERSION="0.5.0"
+
 # Default configuration file
 CUKINIA_CONF='/etc/cukinia/cukinia.conf'
 
@@ -47,7 +49,7 @@ usage()
 	cat <<EOF
 NAME:
 	Cukinia - portable firmware validation framework.
-	Copyright (C) 2017-2019 Savoir-faire Linux Inc.
+	Copyright (C) 2017-2020 Savoir-faire Linux Inc.
 
 	The name means "zucchini" in Polish. It is a nod to Cucumber,
 	another neat test framework.
@@ -58,6 +60,7 @@ USAGE:
 
 OPTIONS:
 	-h, --help	display this message
+	-v, --version	display the version string
 	-o <file>	output results to <file>
 	-f <format>	set output format to <format>, currently supported:
        			csv  junitxml
@@ -66,7 +69,7 @@ EOF
 }
 
 # Parse single character options (sh builtin does not support long options)
-while getopts ":hvo:f:A:-:" opt; do
+while getopts ":o:f:hv-:" opt; do
 	case $opt in
 	o)
 		__log_file=$OPTARG
@@ -78,6 +81,10 @@ while getopts ":hvo:f:A:-:" opt; do
 		usage
 		exit 0
 		;;
+	v)
+		echo "Cukinia version $CUKINIA_VERSION"
+		exit 0
+		;;
 	# long options expantion (options without parameter only)
 	-)
 		case $OPTARG in
@@ -87,6 +94,10 @@ while getopts ":hvo:f:A:-:" opt; do
 			;;
 		no-header)
 			__no_header=1
+			;;
+		version)
+			echo "Cukinia version $CUKINIA_VERSION"
+			exit 0
 			;;
 		*)
 			printf "cukinia: $OPTARG: unsupported long option\n"
