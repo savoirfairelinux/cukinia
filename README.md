@@ -55,7 +55,8 @@ A cukinia config file supports the following statements:
 * ``cukinia_mount <source> <mount point> [fstype] [options]``: Validate the
   presence of a mount on the system
 * ``cukinia_symlink <link> <target>``: Validate the target of a symlink
-* ``not``: Can prefix any test to invert the issue it will produce
+* ``not``: Can prefix any test to invert the issue it will produce (a
+  ``[!]`` is appended to the default test description)
 * ``verbose``: Can prefix any test to preserve stdout/stderr
 * ``as <string>``: Can prefix any test to change its textual description
 
@@ -64,7 +65,7 @@ A cukinia config file supports the following statements:
 * ``cukinia_conf_include <files>``: Includes files as additional config files
 * ``cukinia_run_dir <directory>``: Runs all executables in directory as individual tests
 * ``cukinia_log <message>``: Logs message to stdout
-* ``_ver2int <version``: Convert version string to int, for comparison with cukinia_test
+* ``_ver2int <version>``: Convert version string to int, for comparison with cukinia_test
 
 ### Logging customization
 
