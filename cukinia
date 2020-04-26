@@ -447,29 +447,32 @@ _cukinia_process()
 	local pname="$1"
 	local puser="$2"
 	local puser_uid
+	local owner_uid
+	local procdir
+	local pid
 
 	_cukinia_prepare "Checking process \"$pname\" as ${puser:-any user}"
 
 	if [ -n "$puser" ]; then
-		if ! puser_uid="$(id -u "$puser" 2>/dev/null)" ; then
-			return 1
-		fi
+		# make sure $puser maps to a valid user
+		puser_uid="$(id -u "$puser" 2>/dev/null)"
+		[ -n "$puser_uid" ] || return 1
 	fi
 
 	# scan /proc to get process name and optionally process owner
-	for dir in /proc/[0-9]*/; do
-		# check by process name
-		local cmdline_nb="$(echo ${pname} | wc -w)"
-		local cmdline="$(cat ${dir}/cmdline | tr "\000" " " | cut -d " " -f -${cmdline_nb})"
+	for pid in $(pidof "$pname"); do
+		procdir="/proc/$pid"
 
-		if [ "${cmdline}" != "${pname}" ]; then
-			continue
-		fi
+		# skip kernel threads
+		[ -x $procdir/exe ] || continue
 
-		# check optional process owner
-		if [ -z "$puser" ] || [ "$(grep Uid "$dir/status" | cut -f 2)" = "$puser_uid" ]; then
-			return 0
-		fi
+		# process found, no owner check
+		[ -z "$puser" ] && return 0
+
+
+		# check process owner
+		owner_uid=$(awk '/^Uid:/ { print $2 }' < $procdir/status)
+		[ "$owner_uid" = "$puser_uid" ] && return 0
 	done
 
 	return 1
