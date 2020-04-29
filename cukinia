@@ -2,13 +2,13 @@
 #
 # Cukinia a firmware validation framework
 #
-# Copyright (C) 2017-2019 Savoir-faire Linux Inc.
+# Copyright (C) 2017-2020 Savoir-faire Linux Inc.
 #
 # This program is free software, distributed under the Apache License
 # version 2.0, as well as the GNU General Public License version 3, at
 # your own convenience. See LICENSE and LICENSE.GPLv3 for details.
 
-CUKINIA_VERSION="0.5.0"
+CUKINIA_VERSION="0.5.1-dev"
 
 # Default configuration file
 CUKINIA_CONF='/etc/cukinia/cukinia.conf'
@@ -829,14 +829,14 @@ _cukinia_run_dir()
 	return $ret
 }
 
-# version to integer string utility
-# useful to do version compatibility checks
-# arg1: a dotted integer version string (semver style)
-_ver2int() {
+# version to int utility
+# useful for version checks e.g. using cukinia_test
+# arg1: version string, max 4 x 4 digits (eg. "4.19.135")
+_ver2int()
+{
 	echo "$1" | awk '{
-	   split($1, version_a, ".");
-	   print version_a[1] * 10^12 + version_a[2] * 10^8 + \
-	   	 version_a[3] * 1^4 + version_a[4];
+		split($1, A, ".");
+		print(A[1] * 10^12 + A[2] * 10^8 + A[3] * 10^4 + A[4]);
 	}'
 }
 

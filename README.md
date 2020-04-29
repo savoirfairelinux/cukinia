@@ -65,7 +65,8 @@ A cukinia config file supports the following statements:
 * ``cukinia_conf_include <files>``: Includes files as additional config files
 * ``cukinia_run_dir <directory>``: Runs all executables in directory as individual tests
 * ``cukinia_log <message>``: Logs message to stdout
-* ``_ver2int <version>``: Convert version string to int, for comparison with cukinia_test
+* ``_ver2int <version>``: Convert numeric version string to int, for use with
+  e.g. ``cukinia_test $(_ver2int ${kernel_version}) -gt $(_ver2int 4.19.7)``
 
 ### Logging customization
 
