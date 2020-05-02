@@ -327,7 +327,7 @@ _cukinia_python_pkg()
 {
 	local package="$1"
 
-	_cukinia_prepare "Checking python package: $package"
+	_cukinia_prepare "Checking python package \"$package\" is ${__not:+NOT }available"
 	python -c "import sys, pkgutil; sys.exit(0 if pkgutil.find_loader('$package') else 1)"
 }
 
@@ -370,7 +370,7 @@ _cukinia_result()
 # arg1..n: arguments
 _cukinia_cmd()
 {
-	_cukinia_prepare "Running \"$*\""
+	_cukinia_prepare "Running \"$*\" is ${__not:+NOT }successful"
 	"$@"
 }
 
@@ -378,15 +378,15 @@ _cukinia_cmd()
 # arg1..n: arguments to test(1)
 _cukinia_test()
 {
-	local desc="Running \"test $*\""
+	local desc="Running \"test $*\" ${__not:+NOT }returns success"
 
 	case "$1" in
-	-f) desc="Checking file \"$2\" exists" ;;
-	-s) desc="Checking file \"$2\" is non-empty" ;;
-	-d) desc="Checking directory \"$2\" exists" ;;
-	-b) desc="Checking \"$2\" exists and is block special" ;;
-	-c) desc="Checking \"$2\" exists and is character special" ;;
-	-L|-h) desc="Checking \"$2\" is a symlink" ;;
+	-f) desc="Checking file \"$2\" ${__not:+NOT }exists" ;;
+	-s) desc="Checking file \"$2\" is ${__not:+NOT }non-empty" ;;
+	-d) desc="Checking directory \"$2\" ${__not:+NOT }exists" ;;
+	-b) desc="Checking \"$2\" ${__not:+NOT }exists and is block special" ;;
+	-c) desc="Checking \"$2\" ${__not:+NOT }exists and is character special" ;;
+	-L|-h) desc="Checking \"$2\" is ${__not:+NOT }a symlink" ;;
 	esac
 
 	_cukinia_prepare "$desc"
@@ -398,7 +398,7 @@ _cukinia_user()
 {
 	local user="$1"
 
-	_cukinia_prepare "Checking user \"$user\""
+	_cukinia_prepare "Checking user \"$user\" ${__not:+NOT }exists"
 	grep -q "^$user:" /etc/passwd
 }
 
@@ -407,7 +407,7 @@ _cukinia_group()
 {
 	local group="$1"
 
-	_cukinia_prepare "Checking group \"$group\""
+	_cukinia_prepare "Checking group \"$group\" ${__not:+NOT }exists"
 	grep -q "^$group:" /etc/group
 }
 
@@ -416,7 +416,7 @@ _cukinia_kmod()
 {
 	local kmod="$1"
 
-	_cukinia_prepare "Checking kernel module \"$kmod\" is loaded"
+	_cukinia_prepare "Checking kernel module \"$kmod\" is ${__not:+NOT }loaded"
 	grep -q "^$kmod " /proc/modules
 }
 
@@ -431,11 +431,11 @@ _cukinia_kconf()
 	local line=""
 
 	if [ ! -e "$ikconfig" ]; then
-		_cukinia_prepare "cukinia_kconf: $ikconfig (CONFIG_IKCONFIG_PROC=y) is required"
+		_cukinia_prepare "cukinia_kconf: $ikconfig (CONFIG_IKCONFIG_PROC=y) is ${__not:+NOT }required"
 		return 1
 	fi
 
-	_cukinia_prepare "Checking kernel config \"$kconf\" set to \"$kset\""
+	_cukinia_prepare "Checking kernel config \"$kconf\" ${__not:+NOT }set to \"$kset\""
 
 	case "$kset" in
 	y|m) line="CONFIG_$kconf=$kset" ;;
@@ -462,7 +462,7 @@ _cukinia_process()
 	local procdir
 	local pid
 
-	_cukinia_prepare "Checking process \"$pname\" as ${puser:-any user}"
+	_cukinia_prepare "Checking process \"$pname\" ${__not:+NOT }running as ${puser:-any user}"
 
 	if [ -n "$puser" ]; then
 		# make sure $puser maps to a valid user
@@ -495,7 +495,7 @@ _cukinia_http_request()
 {
 	local url="$1"
 
-	_cukinia_prepare "Checking http url \"$url\""
+	_cukinia_prepare "Checking http url \"$url\" does ${__not:+NOT }return 200"
 	wget -q -O /dev/null "$url"
 }
 
@@ -506,7 +506,7 @@ _cukinia_symlink()
 {
 	local link="$1"
 	local target="$2"
-	_cukinia_prepare "Checking link \"$link\" points to \"$target\""
+	_cukinia_prepare "Checking link \"$link\" does ${__not:+NOT }point to \"$target\""
 	[ "$(readlink -f "$link")" = "$(readlink -f "$target")" ] && return 0 || return 1
 }
 
@@ -535,7 +535,7 @@ _cukinia_listen4()
 		;;
 	esac
 
-	_cukinia_prepare "Checking $re v4 port \"$port\" is open"
+	_cukinia_prepare "Checking $re v4 port \"$port\" is ${__not:+NOT }open"
 
 	netstat -$opts | awk '
 		BEGIN {
@@ -564,7 +564,7 @@ _cukinia_mount()
 	local found=0
 	local result
 
-	_cukinia_prepare "Checking mount: $device on $mountpoint type ${fstype:-any} (${options:-any})"
+	_cukinia_prepare "Checking $device on $mountpoint type ${fstype:-any} (${options:-any}) ${__not:+NOT} mounted"
 
 	# use fstype as an awk regex if present
 	if [ "$fstype" = "any" ] || [ -z "$fstype" ]; then
