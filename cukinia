@@ -506,7 +506,12 @@ _cukinia_symlink()
 {
 	local link="$1"
 	local target="$2"
+
 	_cukinia_prepare "Checking link \"$link\" does ${__not:+NOT }point to \"$target\""
+
+	# fail on non-symlinks
+	[ -L "$link" ] || return 1
+
 	[ "$(readlink -f "$link")" = "$(readlink -f "$target")" ] && return 0 || return 1
 }
 
