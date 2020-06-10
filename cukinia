@@ -563,8 +563,8 @@ _cukinia_mount()
 {
 	local device="$1"
 	local mountpoint="$2"
-	shift 2
-	local fstype="$1"; shift
+	shift $#
+	local fstype="$1"; shift $#
 	local options="$*"
 	local found=0
 	local result
