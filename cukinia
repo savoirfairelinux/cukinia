@@ -203,6 +203,13 @@ logging()
 	return 0
 }
 
+getch()
+{
+    stty -echo
+    read useless
+    stty echo
+}
+
 # cukinia_log: log results to the output media
 cukinia_log()
 {
@@ -235,6 +242,10 @@ cukinia_runner()
 {
 	local ret
 
+    if [ ! -z "$__step" ]; then
+        echo "Press Enter to run next test: '$__deco'"
+        getch
+    fi
 	if [ -n "$__verbose" ]; then
 	       "$@"
 	else
@@ -305,6 +316,18 @@ not()
 	__not=1
 	"$@" || ret=0
 	unset __not
+
+	return $ret
+}
+
+# step: what follows will wait Enter is pressed
+step()
+{
+	local ret=0
+
+	__step=1
+	"$@" || ret=1
+	unset __step
 
 	return $ret
 }
