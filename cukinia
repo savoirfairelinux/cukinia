@@ -19,6 +19,7 @@ GENERIC_FUNCTS='cmd
 		group
 		kconf
 		kmod
+		kversion
 		listen4
 		mount
 		process
@@ -447,6 +448,15 @@ _cukinia_kconf()
 	esac
 
 	zcat /proc/config.gz | grep -q "^$line"
+}
+
+# _cukinia_kversion: check if running kernel version is MAJ.MIN
+# arg1: the kernel version (MAJ.MIN format, e.g. 5.14)
+_cukinia_kversion()
+{
+	local kver="$1"
+	_cukinia_prepare "Checking if kernel version is $kver"
+	test "$(uname -r | cut -d. -f1,2)" = "$kver"
 }
 
 # cukinia_process: checks if process $pname runs
