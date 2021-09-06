@@ -56,6 +56,8 @@ A cukinia config file supports the following statements:
 * ``cukinia_mount <source> <mount point> [fstype] [options]``: Validate the
   presence of a mount on the system
 * ``cukinia_symlink <link> <target>``: Validate the target of a symlink
+* ``cukinia_systemd_failed``: Raise a failure if a systemd unit is in failed state
+* ``cukinia_systemd_unit <unit>``: Validate systemd unit is active
 * ``not``: Can prefix any test to invert the issue it will produce (a
   ``[!]`` is appended to the default test description)
 * ``verbose``: Can prefix any test to preserve stdout/stderr

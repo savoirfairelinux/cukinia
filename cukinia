@@ -25,6 +25,8 @@ GENERIC_FUNCTS='cmd
 		process
 		python_pkg
 		symlink
+		systemd_failed
+		systemd_unit
 		test
 		user'
 
@@ -523,6 +525,26 @@ _cukinia_symlink()
 	[ -L "$link" ] || return 1
 
 	[ "$(readlink -f "$link")" = "$(readlink -f "$target")" ] && return 0 || return 1
+}
+
+# _cukinia_systemd_active: Check for unit activity
+# arg1: The systemd unit name
+_cukinia_systemd_unit()
+{
+	local unit="$1"
+
+	_cukinia_prepare "Checking if systemd unit \"$unit\" is active"
+	systemctl is-active "$unit"
+}
+
+# _cukinia_systemd_failed: Fail on systemd unit failures
+_cukinia_systemd_failed()
+{
+	_cukinia_prepare "Checking for no failed systemd units"
+	if systemctl --failed | grep -qw "failed"; then
+		return 1
+	fi
+	return 0
 }
 
 # _cukinia_listen4: check for a locally bound ipv4 port
