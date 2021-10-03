@@ -329,9 +329,14 @@ verbose()
 _cukinia_python_pkg()
 {
 	local package="$1"
+	for python_interpreter in "python" "python3" "python2"; do
+		python_interpreter="$(which "$python_interpreter")"
+		test -n "$python_interpreter" && break
+	done
 
 	_cukinia_prepare "Checking python package \"$package\" is ${__not:+NOT }available"
-	python -c "import sys, pkgutil; sys.exit(0 if pkgutil.find_loader('$package') else 1)"
+	test -z "$python_interpreter" && return 1
+	"$python_interpreter" -c "import sys, pkgutil; sys.exit(0 if pkgutil.find_loader('$package') else 1)"
 }
 
 # _cukinia_prepare: Prepare test for result
