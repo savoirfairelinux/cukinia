@@ -611,7 +611,7 @@ _cukinia_mount()
 	result=$(awk '
 		$1 == "'$device'" && $2 == "'$mountpoint'" && $3 ~ /^'$fstype'$/ {
 			print $4;
-		}' /proc/mounts | uniq)
+		}' /proc/mounts | sort | uniq)
 
 	[ -n "$result" ] || return 1
 
