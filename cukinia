@@ -17,6 +17,7 @@ CUKINIA_CONF='/etc/cukinia/cukinia.conf'
 GENERIC_FUNCTS='cmd
 		http_request
 		group
+		i2c
 		kconf
 		kmod
 		kversion
@@ -635,6 +636,37 @@ _cukinia_mount()
 
 	[ "$found" -eq "$#" ] || return 1
 	return 0
+}
+
+# _cukinia_i2c: Check if i2c device exists
+# Optional: Check of a device address
+# arg1: the bus number
+# arg2: (optional) the device address
+_cukinia_i2c()
+{
+	local bus_number="$1"
+	local device_address="$2"
+	local ret
+
+	_cukinia_prepare "Checking if i2c-$bus_number${device_address:+-$device_address} exists"
+
+	if [ ! -d /sys/bus/i2c/devices/i2c-"$bus_number" ]; then
+		return 1
+	fi
+
+	if [ -z "$device_address" ]; then
+		return 0
+	fi
+
+	if [ ! -x "$(which i2cdetect)" ]; then
+		_cukinia_prepare "cukinia_i2c: i2cdetect is required"
+		return 1
+	fi
+
+	device_address=${device_address#0x}
+	i2cdetect -y "$bus_number" 0x"$device_address" 0x"$device_address" | cut -d ':' -f2 | grep -E "$device_address|UU"
+	ret=$?
+	return $ret
 }
 
 # Print elapsed time since cukinia startup (in seconds)
