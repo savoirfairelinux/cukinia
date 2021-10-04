@@ -65,6 +65,9 @@ A cukinia config file supports the following statements:
 * ``cukinia_gpio_libgpiod -i [input_pins] -l [output_low_pins] -h [output_high_pins]
   -g [gpiochip](default:gpiochip0)``: Validate the gpio configuration via libgpiod
   (ex: cukinia_gpio_libgpiod -i "0 3 4" -l "10" -h "2 50" -g gpiochip1)
+* ``cukinia_gpio_sysfs -i [input_pins] -l [output_low_pins] -h [output_high_pins]
+  -g [gpiochip](default:gpiochip0)``: Validate the gpio configuration via sysfs
+  (ex: cukinia_gpio_sysfs -i "20 34" -h "3 99 55")
 * ``not``: Can prefix any test to invert the issue it will produce (a
   ``[!]`` is appended to the default test description)
 * ``verbose``: Can prefix any test to preserve stdout/stderr

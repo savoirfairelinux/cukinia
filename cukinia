@@ -18,6 +18,7 @@ GENERIC_FUNCTS='cmd
 		http_request
 		group
 		gpio_libgpiod
+		gpio_sysfs
 		i2c
 		kconf
 		kmod
@@ -730,6 +731,79 @@ _cukinia_gpio_libgpiod()
 			direction=$(gpioinfo "$gpiochip" | grep -E "line +$pin:" | sed 's/ \+/\//g' | cut -d '/' -f5)
 			value=$(gpioinfo "$gpiochip" | grep -E "line +$pin:" | sed 's/ \+/\//g' | cut -d '/' -f6)
 			if [ "output/active-high" != "$direction/$value" ]; then
+				return 1
+			fi
+		done
+	fi
+	return 0
+}
+
+# _cukinia_gpio_sysfs: Check gpio configuration via sysfs
+# arg1: (optional) the pins configured in input
+# arg2: (optional) the pins configured in output high
+# arg3: (optional) the pins configured in output low
+# arg4: (optional) the gpiochip used (default:gpiochip0)
+_cukinia_gpio_sysfs()
+{
+	local input_pins
+	local output_low_pins
+	local output_high_pins
+	local gpiochip="gpiochip0"
+	local direction
+	local value
+
+	while [ $# -gt 0 ]; do
+		case "$1" in
+		-i)
+			input_pins="$2"
+			shift
+			;;
+		-l)
+			output_low_pins="$2"
+			shift
+			;;
+		-h)
+			output_high_pins="$2"
+			shift
+			;;
+		-g)
+			gpiochip="$2"
+			shift
+			break
+			;;
+		esac
+		shift
+	done
+
+	_cukinia_prepare "Checking if gpio pins are well configured via sysfs"
+	if [ -n "$input_pins" ]; then
+		for pin in $input_pins; do
+			echo "$pin" > /sys/class/gpio/export
+			direction=$(cat /sys/class/gpio/gpio"${pin}"/direction)
+			echo "$pin" > /sys/class/gpio/unexport
+			if [ "in" != "$direction" ]; then
+				return 1
+			fi
+		done
+	fi
+	if [ -n "$output_low_pins" ]; then
+		for pin in $output_low_pins; do
+			echo "$pin" > /sys/class/gpio/export
+			direction=$(cat /sys/class/gpio/gpio"${pin}"/direction)
+			value=$(cat /sys/class/gpio/gpio"${pin}"/value)
+			echo "$pin" > /sys/class/gpio/unexport
+			if [ "out/0" != "$direction/$value" ]; then
+				return 1
+			fi
+		done
+	fi
+	if [ -n "$output_high_pins" ]; then
+		for pin in $output_high_pins; do
+			echo "$pin" > /sys/class/gpio/export
+			direction=$(cat /sys/class/gpio/gpio"${pin}"/direction)
+			value=$(cat /sys/class/gpio/gpio"${pin}"/value)
+			echo "$pin" > /sys/class/gpio/unexport
+			if [ "out/1" != "$direction/$value" ]; then
 				return 1
 			fi
 		done
