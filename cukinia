@@ -2,7 +2,7 @@
 #
 # Cukinia a firmware validation framework
 #
-# Copyright (C) 2017-2020 Savoir-faire Linux Inc.
+# Copyright (C) 2017-2021 Savoir-faire Linux Inc.
 #
 # This program is free software, distributed under the Apache License
 # version 2.0, as well as the GNU General Public License version 3, at
@@ -52,7 +52,7 @@ usage()
 	cat <<EOF
 NAME:
 	Cukinia - portable firmware validation framework.
-	Copyright (C) 2017-2020 Savoir-faire Linux Inc.
+	Copyright (C) 2017-2021 Savoir-faire Linux Inc.
 
 	The name means "zucchini" in Polish. It is a nod to Cucumber,
 	another neat test framework.
