@@ -452,50 +452,22 @@ _cukinia_kconf()
 # cukinia_process: checks if process $pname runs
 # Optional: check if the process exist for a given username $puser
 # arg: $1: the process name
-# arg: $2..: [options]
-#             -u <user> : process shall run as <user>
-#             -a <arg> : process shall have <arg> on cmdline
+# arg: $2: [optional] the user name
 _cukinia_process()
 {
 	local pname="$1"
+	local puser="$2"
 	local puser_uid
 	local owner_uid
 	local procdir
 	local pid
-	local opts
 
 	_cukinia_prepare "Checking process \"$pname\" ${__not:+NOT }running as ${puser:-any user}"
-
-	shift
-
-	opts=$(getopt -n cukinia_process -- u:a: "$@")
-cukinia_log "[DD] opts: $opts"
-	eval set -- "$opts"
-	while [ $# -gt 0 ]; do
-cukinia_log '[DD] $# = '$#
-		case "$1" in
-		-a)
-			local parg="$2"
-			shift
-			;;
-		-u)
-			local puser="$2"
-			shift
-			;;
-		--)
-			shift
-			break
-			;;
-		esac
-		shift
-	done
 
 	if [ -n "$puser" ]; then
 		# make sure $puser maps to a valid user
 		puser_uid="$(id -u "$puser" 2>/dev/null)"
 		[ -n "$puser_uid" ] || return 1
-
-		shift
 	fi
 
 	# scan /proc to get process name and optionally process owner
@@ -507,6 +479,7 @@ cukinia_log '[DD] $# = '$#
 
 		# process found, no owner check
 		[ -z "$puser" ] && return 0
+
 
 		# check process owner
 		owner_uid=$(awk '/^Uid:/ { print $2 }' < $procdir/status)
