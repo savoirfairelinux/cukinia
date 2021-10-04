@@ -22,6 +22,7 @@ GENERIC_FUNCTS='cmd
 		i2c
 		kconf
 		kmod
+		knoerror
 		kversion
 		listen4
 		mount
@@ -809,6 +810,53 @@ _cukinia_gpio_sysfs()
 		done
 	fi
 	return 0
+}
+
+# _cukinia_knoerror: Check the kernel has booted without important errors
+# arg1: the message priority
+_cukinia_knoerror()
+{
+	local priority="$1"
+	local ret
+	local use_journalctl
+	local p_loop=$priority
+	local priority_dmesg=$priority
+
+	if [ -x "$(which journalctl)" ]; then
+		use_journalctl=1
+	else
+		use_journalctl=0
+	fi
+
+	_cukinia_prepare "Checking that kernel has booted with no error (priority: $priority)"
+
+	if [ "$use_journalctl" -eq 1 ]; then
+		journalctl --dmesg --priority "$priority" | grep "No entries"
+		ret=$?
+	else
+		if dmesg --level "$priority"; then
+			#dmesg is supporting --level option
+			while [ "$p_loop" != 0 ]; do
+				p_loop=$((p_loop-1))
+				priority_dmesg=$priority_dmesg,$p_loop
+			done
+			if [ -z "$(dmesg --level "$priority_dmesg")" ]; then
+				ret=0
+			else
+				ret=1
+			fi
+		else
+			#dmesg is not supporting --level option
+			_cukinia_prepare "Checking that kernel has booted with no error (using grep)"
+			if [ -z "$(dmesg | grep -Ei 'error|fail|warning')" ]; then
+				ret=0
+			else
+				ret=1
+			fi
+
+		fi
+	fi
+	return $ret
 }
 
 # Print elapsed time since cukinia startup (in seconds)

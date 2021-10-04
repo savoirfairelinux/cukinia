@@ -68,6 +68,8 @@ A cukinia config file supports the following statements:
 * ``cukinia_gpio_sysfs -i [input_pins] -l [output_low_pins] -h [output_high_pins]
   -g [gpiochip](default:gpiochip0)``: Validate the gpio configuration via sysfs
   (ex: cukinia_gpio_sysfs -i "20 34" -h "3 99 55")
+* ``cukinia_knoerror <priority>``: Validate kernel has booted without important
+  errors (the priority argument is the log level number to check)
 * ``not``: Can prefix any test to invert the issue it will produce (a
   ``[!]`` is appended to the default test description)
 * ``verbose``: Can prefix any test to preserve stdout/stderr
