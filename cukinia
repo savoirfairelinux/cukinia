@@ -8,7 +8,7 @@
 # version 2.0, as well as the GNU General Public License version 3, at
 # your own convenience. See LICENSE and LICENSE.GPLv3 for details.
 
-CUKINIA_VERSION="0.5.1"
+CUKINIA_VERSION="0.6.0-dev"
 
 # Default configuration file
 CUKINIA_CONF='/etc/cukinia/cukinia.conf'
