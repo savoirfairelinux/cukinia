@@ -17,6 +17,7 @@ CUKINIA_CONF='/etc/cukinia/cukinia.conf'
 GENERIC_FUNCTS='cmd
 		http_request
 		group
+		gpio_libgpiod
 		i2c
 		kconf
 		kmod
@@ -667,6 +668,73 @@ _cukinia_i2c()
 	i2cdetect -y "$bus_number" 0x"$device_address" 0x"$device_address" | cut -d ':' -f2 | grep -E "$device_address|UU"
 	ret=$?
 	return $ret
+}
+
+# _cukinia_gpio_libgpiod: Check gpio configuration via libgpiod
+# arg1: (optional) the pins configured in input
+# arg2: (optional) the pins configured in output high
+# arg3: (optional) the pins configured in output low
+# arg4: (optional) the gpiochip used (default:gpiochip0)
+_cukinia_gpio_libgpiod()
+{
+	local input_pins
+	local output_low_pins
+	local output_high_pins
+	local gpiochip="gpiochip0"
+	local direction
+	local value
+
+	while [ $# -gt 0 ]; do
+		case "$1" in
+		-i)
+			input_pins="$2"
+			shift
+			;;
+		-l)
+			output_low_pins="$2"
+			shift
+			;;
+		-h)
+			output_high_pins="$2"
+			shift
+			;;
+		-g)
+			gpiochip="$2"
+			shift
+			break
+			;;
+		esac
+		shift
+	done
+
+	_cukinia_prepare "Checking if gpio pins are well configured via libgpiod"
+	if [ -n "$input_pins" ]; then
+		for pin in $input_pins; do
+			direction=$(gpioinfo "$gpiochip" | grep -E "line +$pin:" | sed 's/ \+/\//g' | cut -d '/' -f5)
+			if [ "input" != "$direction" ]; then
+				return 1
+			fi
+		done
+	fi
+	if [ -n "$output_low_pins" ]; then
+		for pin in $output_low_pins; do
+			direction=$(gpioinfo "$gpiochip" | grep -E "line +$pin:" | sed 's/ \+/\//g' | cut -d '/' -f5)
+			value=$(gpioinfo "$gpiochip" | grep -E "line +$pin:" | sed 's/ \+/\//g' | cut -d '/' -f6)
+			if [ "output/active-low" != "$direction/$value" ]; then
+				return 1
+			fi
+		done
+	fi
+	if [ -n "$output_high_pins" ]; then
+		for pin in $output_high_pins; do
+			direction=$(gpioinfo "$gpiochip" | grep -E "line +$pin:" | sed 's/ \+/\//g' | cut -d '/' -f5)
+			value=$(gpioinfo "$gpiochip" | grep -E "line +$pin:" | sed 's/ \+/\//g' | cut -d '/' -f6)
+			if [ "output/active-high" != "$direction/$value" ]; then
+				return 1
+			fi
+		done
+	fi
+	return 0
 }
 
 # Print elapsed time since cukinia startup (in seconds)
