@@ -15,10 +15,10 @@ CUKINIA_CONF='/etc/cukinia/cukinia.conf'
 
 # Generic user functions templated to _cukinia_xxx()
 GENERIC_FUNCTS='cmd
-		http_request
-		group
 		gpio_libgpiod
 		gpio_sysfs
+		group
+		http_request
 		i2c
 		kconf
 		kmod
