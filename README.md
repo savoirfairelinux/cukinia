@@ -71,6 +71,8 @@ A cukinia config file supports the following statements:
   (ex: cukinia_gpio_sysfs -i "20 34" -h "3 99 55")
 * ``cukinia_knoerror <priority>``: Validate kernel has booted without important
   errors (the priority argument is the log level number to check)
+* ``cukinia_sysctl <kernel parameter> <value>``: Test if a kernel parameter is
+  set to a value
 * ``not``: Can prefix any test to invert the issue it will produce (a
   ``[!]`` is appended to the default test description)
 * ``verbose``: Can prefix any test to preserve stdout/stderr

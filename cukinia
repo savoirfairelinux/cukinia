@@ -28,6 +28,7 @@ GENERIC_FUNCTS='cmd
 		mount
 		process
 		python_pkg
+		sysctl
 		symlink
 		systemd_failed
 		systemd_unit
@@ -524,6 +525,23 @@ _cukinia_http_request()
 
 	_cukinia_prepare "Checking http url \"$url\" does ${__not:+NOT }return 200"
 	wget -q -O /dev/null "$url"
+}
+
+# _cukinia_sysctl: check kernel parameters with sysctl
+# args1: kernel parameter
+# args2: test value
+_cukinia_sysctl()
+{
+	local kparam="$1"
+	local value="$2"
+
+	_cukinia_prepare "Checking \"$kparam\" is ${__not:+NOT }set to \"$value\""
+
+	if [ "$(sysctl "$kparam")" = "$kparam = $value" ]  ;then
+		return 0
+	else
+		return 1
+	fi
 }
 
 # _cukinia_symlink: validate the target of symlink
