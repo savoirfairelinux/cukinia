@@ -2,7 +2,7 @@
 #
 # Cukinia a firmware validation framework
 #
-# Copyright (C) 2017-2021 Savoir-faire Linux Inc.
+# Copyright (C) 2017-2023 Savoir-faire Linux Inc.
 #
 # This program is free software, distributed under the Apache License
 # version 2.0, as well as the GNU General Public License version 3, at
@@ -445,12 +445,13 @@ _cukinia_kmod()
 _cukinia_kconf()
 {
 	local ikconfig="/proc/config.gz"
+	local bootconfig="/boot/config-$(uname -r)"
 	local kconf="$1"
 	local kset="$2"
 	local line=""
 
-	if [ ! -e "$ikconfig" ]; then
-		_cukinia_prepare "cukinia_kconf: $ikconfig (CONFIG_IKCONFIG_PROC=y) is ${__not:+NOT }required"
+	if [ ! -e "$ikconfig" ] && [ ! -e "$bootconfig" ]; then
+		_cukinia_prepare "cukinia_kconf: $ikconfig (CONFIG_IKCONFIG_PROC=y) or $bootconfig is ${__not:+NOT }required"
 		return 1
 	fi
 
@@ -465,7 +466,11 @@ _cukinia_kconf()
 		;;
 	esac
 
-	zcat /proc/config.gz | grep -q "^$line"
+	if [ ! -e "$ikconfig" ]; then
+		cat $bootconfig | grep -q "^$line"
+	else
+		zcat /proc/config.gz | grep -q "^$line"
+	fi
 }
 
 # _cukinia_kversion: check if running kernel version is MAJ.MIN
