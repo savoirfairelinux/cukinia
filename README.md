@@ -73,6 +73,11 @@ A cukinia config file supports the following statements:
 * ``cukinia_knoerror <priority>``: Validate kernel has booted without important
   errors (the priority argument is the log level number to check)
 * ``cukinia_sysctl <parameter> <value>``: Validate kernel sysctl parameter is set to value
+* ``cukinia_netif_has_ip <interface> [-4|-6] [flags]``: Validate that interface has ip config parameters
+  * example: `cukinia_netif_has_ip eth0 -4 dynamic`
+  * example: `cukinia_netif_has_ip eth0 -6 "scope global"`
+* ``cukinia_netif_is_up <interface>``: Validate network interface state is up
+* ``cukinia_dns_resolve <hostname>``: Validate that hostname can be resolved
 * ``not``: Can prefix any test to invert the issue it will produce (a
   ``[!]`` is appended to the default test description)
 * ``verbose``: Can prefix any test to preserve stdout/stderr

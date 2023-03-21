@@ -16,6 +16,7 @@ CUKINIA_CONF='/etc/cukinia/cukinia.conf'
 # Generic user functions templated to _cukinia_xxx()
 GENERIC_FUNCTS='cmd
 		cmdline
+		dns_resolve
 		gpio_libgpiod
 		gpio_sysfs
 		group
@@ -27,6 +28,8 @@ GENERIC_FUNCTS='cmd
 		kversion
 		listen4
 		mount
+		netif_has_ip
+		netif_is_up
 		process
 		python_pkg
 		symlink
@@ -58,7 +61,7 @@ usage()
 	cat <<EOF
 NAME:
 	Cukinia - portable firmware validation framework.
-	Copyright (C) 2017-2021 Savoir-faire Linux Inc.
+	Copyright (C) 2017-2023 Savoir-faire Linux Inc.
 
 	The name means "zucchini" in Polish. It is a nod to Cucumber,
 	another neat test framework.
@@ -889,6 +892,50 @@ _cukinia_knoerror()
 		fi
 	fi
 	return $ret
+}
+
+# _cukinia_netif_is_up: check if a network interface is up
+# arg1: interface name
+_cukinia_netif_is_up() {
+	local interface="$1"
+
+	_cukinia_prepare "Checking if interface \"$interface\" is ${__not:+NOT }up"
+	ip -o link show "$interface" up | grep -q "state UP" 2>&1
+}
+
+# _cukinia_netif_has_ip(): check if an interface has an IP address assigned
+# arg1: interface name, eg "eth0"
+# arg2: (optional) IP address family, "-6" for IPv6 (default: IPv4)
+# arg3: (optional) extra interface flags to check, eg "dynamic" or "scope global"
+_cukinia_netif_has_ip() {
+	local interface="$1"
+	local family_arg="$2"
+	local extra_flags="$3"
+	local regex
+
+	if [ "$family_arg" = "-6" ]; then
+		regex="inet6.[0-9a-f]"
+	else
+		family_arg="-4"
+		regex="inet.[0-9]"
+	fi
+
+	if [ "$extra_flags" ]; then
+		regex="$regex.*$extra_flags"
+	fi
+
+	_cukinia_prepare "Checking interface \"$interface\" has ${__not:+NO }ipv${family_arg:1} assigned ${extra_flags:+($extra_flags)}"
+	ip -o $family_arg addr show dev "$interface" | grep -q "$regex"
+}
+
+# _cukinia_dns_resolve: check if a hostname can be resolved
+# arg1: hostname
+_cukinia_dns_resolve() {
+	local hostname="$1"
+
+	_cukinia_prepare "Checking if hostname \"$hostname\" can ${__not:+NOT }be resolved"
+
+	host "$hostname" >/dev/null && return 0 || return 1
 }
 
 # Print elapsed time since cukinia startup (in seconds)
