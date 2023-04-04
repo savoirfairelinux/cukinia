@@ -15,6 +15,7 @@ CUKINIA_CONF='/etc/cukinia/cukinia.conf'
 
 # Generic user functions templated to _cukinia_xxx()
 GENERIC_FUNCTS='cmd
+		cmdline
 		gpio_libgpiod
 		gpio_sysfs
 		group
@@ -391,6 +392,15 @@ _cukinia_cmd()
 {
 	_cukinia_prepare "Running \"$*\" is ${__not:+NOT }successful"
 	"$@"
+}
+
+# _cukinia_cmdline: checks if kernel cmdline $1 is set
+_cukinia_cmdline()
+{
+	local cmdline="$1"
+
+	_cukinia_prepare "Checking kernel cmdline \"$cmdline\" is ${__not:+NOT }set"
+	grep -q "$cmdline" /proc/cmdline
 }
 
 # _cukinia_test: wrapper to test(1)
