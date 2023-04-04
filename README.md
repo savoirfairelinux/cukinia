@@ -56,6 +56,7 @@ A cukinia config file supports the following statements:
 * ``cukinia_test <expr>``: Validates that test(1) expression is true
 * ``cukinia_http_request <url>``: Validates that url returns a 200 code
 * ``cukinia_cmd <command>``: Validates that arbitrary command returns true
+* ``cukinia_cmdline <param[=val_regex]>``: Validates kernel cmdline contains param (optional value)
 * ``cukinia_listen4 <proto> <port>``: Validates that tcp/udp port is open locally
 * ``cukinia_mount <source> <mount point> [fstype] [options]``: Validate the
   presence of a mount on the system
