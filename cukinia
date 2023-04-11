@@ -916,6 +916,7 @@ _junitxml_end()
 _junitxml_end_suite()
 {
 	local name=$__suite_name
+	local name_unformatted=$__suite_name_unformatted
 	local outfile="$1"
 	local timestamp
 	local failures
@@ -951,7 +952,7 @@ _junitxml_end_suite()
 
 	# append the whole testsuite block to the outfile
 	cat >>$outfile <<EOF
-  <testsuite name="$name" package="$name" errors="$errors" tests="$tests" failures="$failures" timestamp="$timestamp" time="$seconds">
+  <testsuite name="$name_unformatted" package="$name" errors="$errors" tests="$tests" failures="$failures" timestamp="$timestamp" time="$seconds">
 EOF
 	cat $__logfile_tmp.$name >>$outfile
 	rm -f $__logfile_tmp.$name
@@ -962,10 +963,10 @@ EOF
 # arg1: name of the test suite ([a-zA-Z0-9_]+)
 _junitxml_add_suite()
 {
-	local name="$1"
+	local name_unformatted="$1"
 
 	# strip the name from any fancy character
-	name="$(echo $name | sed -e 's/[^a-zA-Z0-9_]//g')"
+	name="$(echo $name_unformatted | sed -e 's/[^a-zA-Z0-9_]//g')"
 
 	if [ -z "$name" ]; then
 		return 1
@@ -987,6 +988,7 @@ _junitxml_add_suite()
 
 	# suite properties
 	__suite_name="$name"
+	__suite_name_unformatted="$name_unformatted"
 	__suite_tests=0
 	__suite_errors=0
 	__suite_failures=0
