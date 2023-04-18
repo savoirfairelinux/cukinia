@@ -71,7 +71,7 @@ OPTIONS:
 	-v, --version	display the version string
 	-o <file>	output results to <file>
 	-f <format>	set output format to <format>, currently supported:
-       			csv  junitxml
+       			csv junitxml
 	--no-header	do not print headers in concerned output formats
 EOF
 }
@@ -129,7 +129,7 @@ cukinia_epoch=$(date +%s)
 case "$__log_format" in
 csv)
 	if [ -z "$__no_header" ]; then
-		echo "TEST MESSAGE, RESULT" >"$__logfile_tmp"
+		echo "TEST MESSAGE, RESULT, TEST CLASS, TEST SUITE" >"$__logfile_tmp"
 	else
 		: >"$__logfile_tmp"
 	fi
@@ -191,7 +191,7 @@ logging()
 		__log_pfx="$*"
 		;;
 	class)
-		if [ "$__log_format" = "junitxml" ]; then
+		if [ -n "$__log_format" ]; then
 			shift
 			__log_class="$*"
 		fi
@@ -200,6 +200,9 @@ logging()
 		if [ "$__log_format" = "junitxml" ]; then
 			shift
 			_junitxml_add_suite "$1"
+		elif [ "$__log_format" = "csv" ]; then
+			shift
+			__suite_name="$*"
 		fi
 		;;
 	*)
@@ -221,7 +224,7 @@ cukinia_log()
 	csv)
 		if [ "$result" = "PASS" ] || [ "$result" = "FAIL" ]; then
 			message=$(echo $message | sed -e "s/'/\\'/g") # ' -> \'
-			echo "'$message',$result" >>"$__logfile_tmp"
+			echo "'$message',$result,$__log_class,$__suite_name" >>"$__logfile_tmp"
 		fi
 		;;
 
