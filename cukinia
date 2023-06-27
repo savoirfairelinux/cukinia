@@ -929,7 +929,7 @@ _junitxml_end()
 # arg1: output file for the <testsuite> block
 _junitxml_end_suite()
 {
-	local name=$__suite_name
+	local name="$__suite_name"
 	local outfile="$1"
 	local timestamp
 	local failures
@@ -967,8 +967,8 @@ _junitxml_end_suite()
 	cat >>$outfile <<EOF
   <testsuite name="$name" package="$name" errors="$errors" tests="$tests" failures="$failures" timestamp="$timestamp" time="$seconds">
 EOF
-	cat $__logfile_tmp.$name >>$outfile
-	rm -f $__logfile_tmp.$name
+	cat "$__logfile_tmp.$name" >>$outfile
+	rm -f "$__logfile_tmp.$name"
 	echo "  </testsuite>" >>$outfile
 }
 
@@ -979,7 +979,7 @@ _junitxml_add_suite()
 	local name="$1"
 
 	# strip the name from any fancy character
-	name="$(echo $name | sed -e 's/[^a-zA-Z0-9_]//g')"
+	name="$(echo $name | sed -e 's/[^a-zA-Z0-9_ ]//g')"
 
 	if [ -z "$name" ]; then
 		return 1
