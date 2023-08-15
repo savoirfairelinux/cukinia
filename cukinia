@@ -248,7 +248,11 @@ cukinia_runner()
 	local ret
 
 	if [ -n "$__verbose" ]; then
-	       "$@"
+		if [ "$__log_format" = "junitxml" ]; then
+			"$@" 1>$__stdout_tmp 2>$__stderr_tmp
+		else
+			"$@"
+		fi
 	else
 		"$@" >/dev/null 2>&1
 	fi
@@ -1147,11 +1151,7 @@ for func in $GENERIC_FUNCTS; do
 	eval "$(cat <<EOF
 cukinia_$func()
 {
-      if [ "$__log_format" = "junitxml" ]; then
-          cukinia_runner _cukinia_$func "\$@" 1>$__stdout_tmp 2>$__stderr_tmp
-      else
-          cukinia_runner _cukinia_$func "\$@"
-      fi
+	cukinia_runner _cukinia_$func "\$@"
 }
 EOF
 )"
