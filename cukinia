@@ -34,7 +34,8 @@ GENERIC_FUNCTS='cmd
 		systemd_failed
 		systemd_unit
 		test
-		user'
+		user
+		useringroup'
 
 # By default log to stdout
 __log_file="/dev/stdout"
@@ -437,6 +438,27 @@ _cukinia_user()
 
 	_cukinia_prepare "Checking user \"$user\" ${__not:+NOT }exists"
 	grep -q "^$user:" /etc/passwd
+}
+
+# _cukinia_useringroup: checks if user is in groups
+# arg1: user
+# arg2..n: groups
+_cukinia_useringroup()
+{
+	local username="$1"
+	shift
+	local groupnames="$@"
+	local user_groups=$(groups "$username")
+
+	_cukinia_prepare "Checking user \"$username\" is ${__not:+NOT }member of \"$groupnames\""
+
+	for groupname in $groupnames; do
+		if ! echo "$user_groups" | grep -q "$groupname"; then
+			return 1
+		fi
+	done
+
+	return 0
 }
 
 # _cukinia_group: checks if group $1 exists

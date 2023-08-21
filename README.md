@@ -47,6 +47,7 @@ A cukinia config file supports the following statements:
 
 * ``cukinia_user <username>``: Validates that user exists
 * ``cukinia_group <groupname>``: Validates that group exists
+* ``cukinia_useringroup <username> <groups>: Validate that user is member of groups
 * ``cukinia_kmod <kernel module>``: Validates that kernel module is loaded
 * ``cukinia_kconf <kernel config symbol> <y|m|n>``: Validates that kernel config
   symbol is set to given tristate value
