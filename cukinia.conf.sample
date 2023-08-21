@@ -2,6 +2,7 @@ logging prefix "cukinia: "
 
 cukinia_user www-data
 cukinia_user mysql
+cukinia_user_memberof $USER sudo
 cukinia_process udchcpd
 cukinia_run_dir /etc/cukinia/tests.d
 cukinia_process Xorg
