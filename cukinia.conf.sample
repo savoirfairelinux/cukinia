@@ -2,6 +2,7 @@ logging prefix "cukinia: "
 
 cukinia_user www-data
 cukinia_user mysql
+cukinia_useringroup root audio video
 cukinia_process udchcpd
 cukinia_run_dir /etc/cukinia/tests.d
 cukinia_process Xorg
@@ -10,7 +11,6 @@ cukinia_python_pkg math
 cukinia_http_request www.google.com
 cukinia_mount sysfs /sys sysfs rw
 cukinia_symlink /etc/network/interfaces /tmp/interfaces
-
 
 # Those tests should always fail
 cukinia_process nonexistent nonexistent
