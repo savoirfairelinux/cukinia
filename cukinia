@@ -1055,13 +1055,13 @@ EOF
 
 	if [ -s "$__stderr_tmp" ]; then
 		cat >>$logfile <<EOF
-      <system-err><![CDATA[$(cat $__stderr_tmp)]]></system-err>
+      <system-err><![CDATA[$(cat $__stderr_tmp | tr -dc [:print:])]]></system-err>
 EOF
 	fi
 
 	if [ -s "$__stdout_tmp" ]; then
 		cat >>$logfile <<EOF
-      <system-out><![CDATA[$(cat $__stdout_tmp)]]></system-out>
+      <system-out><![CDATA[$(cat $__stdout_tmp | tr -dc [:print:])]]></system-out>
 EOF
 	fi
 
