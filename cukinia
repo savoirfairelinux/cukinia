@@ -704,15 +704,18 @@ _cukinia_mount()
 
 # _cukinia_i2c: Check if i2c device exists
 # Optional: Check of a device address
+# Optional: Check the device uses the correct driver
 # arg1: the bus number
 # arg2: (optional) the device address
+# arg3: (optional) the device driver name
 _cukinia_i2c()
 {
 	local bus_number="$1"
 	local device_address="$2"
+	local driver_name="$3"
 	local ret
 
-	_cukinia_prepare "Checking if i2c-$bus_number${device_address:+-$device_address} exists"
+	_cukinia_prepare "Checking if i2c-$bus_number${device_address:+-$device_address} exists${driver_name:+ and is $driver_name}"
 
 	if [ ! -d /sys/bus/i2c/devices/i2c-"$bus_number" ]; then
 		return 1
@@ -730,7 +733,22 @@ _cukinia_i2c()
 	device_address=${device_address#0x}
 	i2cdetect -y "$bus_number" 0x"$device_address" 0x"$device_address" | cut -d ':' -f2 | grep -E "$device_address|UU"
 	ret=$?
-	return $ret
+	if [ $ret -ne 0 ]; then
+		return $ret
+	fi
+
+	if [ -z "$driver_name" ]; then
+		return 0
+	fi
+
+	local device_path=$bus_number-$(printf '%0'4'd' $device_address)
+	local link=/sys/bus/i2c/devices/$device_path/driver
+	local target=/sys/bus/i2c/drivers/$driver_name
+
+	# fail on non-symlinks
+	[ -L "$link" ] || return 1
+
+	[ "$(readlink -f "$link")" = "$(readlink -f "$target")" ] && return 0 || return 1
 }
 
 # _cukinia_gpio_libgpiod: Check gpio configuration via libgpiod
