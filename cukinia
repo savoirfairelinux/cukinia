@@ -31,6 +31,7 @@ GENERIC_FUNCTS='cmd
 		netif_has_ip
 		netif_is_up
 		process
+		kprocess
 		python_pkg
 		symlink
 		sysctl
@@ -560,6 +561,27 @@ _cukinia_process()
 		# check process owner
 		owner_uid=$(awk '/^Uid:/ { print $2 }' < $procdir/status)
 		[ "$owner_uid" = "$puser_uid" ] && return 0
+	done
+
+	return 1
+}
+
+# cukinia_kprocess: checks if kernel process $pname runs
+# arg: $1: the kernel process name
+_cukinia_kprocess()
+{
+	local pname="$1"
+	local procdir
+	local pid
+
+	_cukinia_prepare "Checking kernel process \"$pname\" ${__not:+NOT }running"
+
+	# scan /proc to get process name
+        # as some version of pidof do not look for kernel process, use pgrep with exact match
+	for pid in $(pgrep -x "$pname"); do
+		# check that it is a kernel threads
+                # null byte is removed from thread cmdline to avoid bash warning
+		[ -z "$(tr -d '\0' < /proc/$pid/cmdline)" ] && return 0
 	done
 
 	return 1
