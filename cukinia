@@ -1110,31 +1110,31 @@ _junitxml_add_case()
 
 	__suite_tests=$((__suite_tests + 1))
 
-	cat >>$logfile <<EOF
+	cat >>"$logfile" <<EOF
     <testcase classname="${__log_class:-cukinia}" name="$name" time="0">
 EOF
 
 	if [ "$result" != "PASS" ]; then
 		__suite_failures=$((__suite_failures + 1))
 
-		cat >>$logfile <<EOF
+		cat >>"$logfile" <<EOF
       <failure type="unit-test" message="failed"><![CDATA[$message: FAIL]]></failure>
 EOF
 	fi
 
 	if [ -s "$__stderr_tmp" ]; then
-		cat >>$logfile <<EOF
+		cat >>"$logfile" <<EOF
       <system-err><![CDATA[$(cat $__stderr_tmp | tr -dc [:print:])]]></system-err>
 EOF
 	fi
 
 	if [ -s "$__stdout_tmp" ]; then
-		cat >>$logfile <<EOF
+		cat >>"$logfile" <<EOF
       <system-out><![CDATA[$(cat $__stdout_tmp | tr -dc [:print:])]]></system-out>
 EOF
 	fi
 
-	echo "    </testcase>" >>$logfile
+	echo "    </testcase>" >>"$logfile"
 }
 
 # _colorize: return colorized string
