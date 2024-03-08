@@ -83,6 +83,7 @@ A cukinia config file supports the following statements:
   ``[!]`` is appended to the default test description)
 * ``verbose``: Can prefix any test to preserve stdout/stderr
 * ``as <string>``: Can prefix any test to change its textual description
+* ``id <string>``: Can prefix any test to add a test id in the different outputs
 
 ### Condition statements
 
@@ -161,6 +162,9 @@ cukinia_listen4 udp 53
 
 # Check the link interfaces point to /tmp/interfaces
 cukinia_symlink /etc/network/interfaces /tmp/interfaces
+
+# Add a id linked to the test
+id "SWR_001" as "Checking systemd units" cukinia_systemd_failed
 
 # End
 cukinia_log "ran $cukinia_tests tests, $cukinia_failures failures"

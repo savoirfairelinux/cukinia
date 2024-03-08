@@ -138,7 +138,7 @@ cukinia_epoch=$(date +%s)
 case "$__log_format" in
 csv)
 	if [ -z "$__no_header" ]; then
-		echo "TEST MESSAGE, RESULT, TEST CLASS, TEST SUITE" >"$__logfile_tmp"
+		echo "TEST MESSAGE, RESULT, TEST CLASS, TEST SUITE, TEST ID" >"$__logfile_tmp"
 	else
 		: >"$__logfile_tmp"
 	fi
@@ -240,7 +240,7 @@ cukinia_log()
 	csv)
 		if _should_log; then
 			message=$(echo $message | sed -e "s/'/\\'/g") # ' -> \'
-			echo "'$message',$result,$__log_class,$__suite_name" >>"$__logfile_tmp"
+			echo "'$message',$result,$__log_class,$__suite_name,$__test_id" >>"$__logfile_tmp"
 		fi
 		;;
 
@@ -315,6 +315,20 @@ cukinia_run_dir()
 		[ -d "$dir" ] || continue
 		_cukinia_run_dir "$dir"
 	done
+}
+
+# id: add a test identifier to easily track it
+# arg1: id name
+# arg2..: command
+id()
+{
+	local ret=0
+	__test_id="$1"; shift
+
+	"$@" || ret=1
+	unset __test_id
+
+	return $ret
 }
 
 # as: change the description of what follows
@@ -442,7 +456,7 @@ _cukinia_result()
 		local suffix=" [$(_colorize yellow2 "unmet condition")]"
 	fi
 
-	cukinia_log "[$result] ${__cukinia_cur_test}${suffix}"
+	cukinia_log "[$result] "${__test_id:+ ${__test_id} --}" ${__cukinia_cur_test}${suffix}"
 }
 
 # _cukinia_cmd: wrapper to any command
@@ -1197,6 +1211,14 @@ EOF
 	if [ -s "$__stdout_tmp" ]; then
 		cat >>"$logfile" <<EOF
       <system-out><![CDATA[$(cat $__stdout_tmp | tr -dc [:print:])]]></system-out>
+EOF
+	fi
+
+	if [ -n "$__test_id" ]; then
+		cat >>"$logfile" <<EOF
+      <properties>
+        <property name="cukinia.id" value="$__test_id"/>
+      </properties>
 EOF
 	fi
 
