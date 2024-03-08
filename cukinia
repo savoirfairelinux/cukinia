@@ -770,7 +770,7 @@ _cukinia_gpio_libgpiod()
 		shift
 	done
 
-	_cukinia_prepare "Checking if gpio pins are well configured via libgpiod"
+	_cukinia_prepare "Checking if $gpiochip pins are well configured via libgpiod"
 	if [ -n "$input_pins" ]; then
 		for pin in $input_pins; do
 			direction=$(gpioinfo "$gpiochip" | grep -E "line +$pin:" | sed 's/ \+/\//g' | cut -d '/' -f5)
@@ -837,7 +837,7 @@ _cukinia_gpio_sysfs()
 		shift
 	done
 
-	_cukinia_prepare "Checking if gpio pins are well configured via sysfs"
+	_cukinia_prepare "Checking if $gpiochip pins are well configured via sysfs"
 	if [ -n "$input_pins" ]; then
 		for pin in $input_pins; do
 			echo "$pin" > /sys/class/gpio/export
