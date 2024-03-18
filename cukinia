@@ -78,6 +78,7 @@ OPTIONS:
 	-f <format>	set output format to <format>, currently supported:
        			csv junitxml
 	--no-header	do not print headers in concerned output formats
+	--trace         trace execution (for debugging)
 EOF
 }
 
@@ -107,6 +108,9 @@ while getopts ":o:f:hv-:" opt; do
 			;;
 		no-header)
 			__no_header=1
+			;;
+		trace)
+			set -x
 			;;
 		version)
 			echo "Cukinia version $CUKINIA_VERSION"
