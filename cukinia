@@ -229,16 +229,23 @@ cukinia_log()
 	local message="$1"
 	local result="$2"
 
+	_should_log() {
+		case "$result" in
+		PASS|FAIL|SKIP) return 0 ;;
+		esac
+		return 1
+	}
+
 	case "$__log_format" in
 	csv)
-		if [ "$result" = "PASS" ] || [ "$result" = "FAIL" ]; then
+		if _should_log; then
 			message=$(echo $message | sed -e "s/'/\\'/g") # ' -> \'
 			echo "'$message',$result,$__log_class,$__suite_name" >>"$__logfile_tmp"
 		fi
 		;;
 
 	junitxml)
-		if [ "$result" = "PASS" ] || [ "$result" = "FAIL" ]; then
+		if _should_log; then
 			_junitxml_add_case "$message" "$result"
 		fi
 		;;
@@ -268,6 +275,9 @@ cukinia_runner()
 
 	if [ -n "$CUKINIA_ALWAYS_PASS" ]; then
 		__not="pass"
+	elif [ -n "$__skip_condition" ]; then
+		_cukinia_result SKIP
+		return
 	fi
 
 	case "$__not..$ret" in
@@ -346,6 +356,40 @@ verbose()
 	return $ret
 }
 
+# _condition_run: run $@ if condition
+# arg1: the condition
+# arg2..: commands and arguments
+_condition_run()
+{
+	local ret=0
+
+	eval "$1" >/dev/null || __skip_condition=1
+	shift
+
+	"$@" || ret=1
+	unset __skip_condition
+
+	return $ret
+}
+
+# unless: condition test with a negative condition
+# arg1: the condition expression
+# arg2..: command
+unless()
+{
+	local condition="$1"; shift
+	_condition_run "! $condition" "$@"
+}
+
+# when: condition test when condition is true
+# arg1: the condition expression
+# arg2..: command
+when()
+{
+	local condition="$1"; shift
+	_condition_run "$condition" "$@"
+}
+
 # _cukinia_python_pkg: try to import the python package
 # arg1: the python package
 _cukinia_python_pkg()
@@ -381,25 +425,24 @@ _cukinia_result()
 {
 	local result="$1"
 
-	case "$result" in
-	PASS)
-		result=$(_colorize green "PASS")
-		;;
-	FAIL)
-		result=$(_colorize red "FAIL")
-		;;
-	*)
-		;;
-	esac
-
 	case "$__log_format" in
 	csv|junitxml)
 		cukinia_log "$__cukinia_cur_test" "$result"
-		;;
-	*)
-		cukinia_log "[$result] $__cukinia_cur_test"
+		return
 		;;
 	esac
+
+	case "$result" in
+	PASS) result=$(_colorize green "PASS") ;;
+	FAIL) result=$(_colorize red "FAIL") ;;
+	SKIP) result=$(_colorize yellow2 "SKIP") ;;
+	esac
+
+	if [ "$__skip_condition" ]; then
+		local suffix=" [$(_colorize yellow2 "unmet condition")]"
+	fi
+
+	cukinia_log "[$result] ${__cukinia_cur_test}${suffix}"
 }
 
 # _cukinia_cmd: wrapper to any command
