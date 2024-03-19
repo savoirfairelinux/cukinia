@@ -84,6 +84,27 @@ A cukinia config file supports the following statements:
 * ``verbose``: Can prefix any test to preserve stdout/stderr
 * ``as <string>``: Can prefix any test to change its textual description
 
+### Condition statements
+
+* `when <condition>`: Can prefix any test to `<condition>` it
+* `unless <condition>`: Just like `when`, but the opposite
+
+If the condition is not met, the test status will be reported as SKIP.
+
+A few examples using `when` and `unless`:
+``` bash
+on_eval_board() { grep -q EVK /sys/firmware/devicetree/base/model; }
+arch_is_arm64() { test "$(uname -m)" = "aarch64"; }
+
+unless "on_eval_board" \
+  as "Custom LED controller was detected" \
+    cukinia_test -d /sys/class/leds/superled
+
+when "arch_is_arm64" \
+  unless "on_eval_board" \
+    cukinia_kmod some_driver 
+```
+
 ### Utility statements
 
 * ``cukinia_conf_include <files>``: Includes files as additional config files
