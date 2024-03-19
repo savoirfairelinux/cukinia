@@ -330,6 +330,7 @@ not()
 }
 
 # verbose: the output of what follows will not be muted
+# arg1..: command
 verbose()
 {
 	local ret=0
