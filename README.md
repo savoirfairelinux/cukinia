@@ -104,6 +104,17 @@ when "arch_is_arm64" \
   unless "on_eval_board" \
     cukinia_kmod some_driver 
 ```
+* `on <test_result> <statement>`: Can execute a statemement conditionally to test result
+For each test result some statements can be executed:
+    * `success`
+        no statement supported for the moment
+    * `failure`
+        - `retry <count> [after <interval>]`: retry the test `count` times after optional `interval` seconds between each attempt (default to 0 second)
+            examples:
+            ``` bash
+            on failure retry 3 after 2 cukinia_systemd_unit some_unit
+            on failure retry 3 cukinia_systemd_unit some_unit
+            ```
 
 ### Utility statements
 
