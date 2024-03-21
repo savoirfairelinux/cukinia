@@ -259,11 +259,27 @@ cukinia_log()
 	esac
 }
 
+# Retry current cukinia test with optionnal delay
+# arg1..n: cukinia test arguments
+_cukinia_retry()
+{
+	local arguments="$@"
+
+	echo >&2 "Retry \"$__cukinia_cur_test\" in ${__wait_time:-0s}"
+	__retry=$((__retry-1))
+	sleep ${__wait_time:-0}
+	cukinia_runner $arguments
+
+	return $ret
+}
+
 # run the test and its context
 # arg1..n: command to run and their arguments
 cukinia_runner()
 {
 	local ret
+	local result
+	local arguments="$@"
 
 	if [ -n "$__verbose" ]; then
 		if [ "$__log_format" = "junitxml" ]; then
@@ -286,25 +302,45 @@ cukinia_runner()
 
 	case "$__not..$ret" in
 	pass..*)
-		_cukinia_result PASS
+		result=PASS
 		;;
 	1..0)
-		_cukinia_result FAIL
-		cukinia_failures=$((cukinia_failures + 1))
+		result=FAIL
 		;;
 	1..*)
-		_cukinia_result PASS
+		result=PASS
 		;;
 	..0)
-		_cukinia_result PASS
+		result=PASS
 		;;
 	..*)
-		_cukinia_result FAIL
-		cukinia_failures=$((cukinia_failures + 1))
+		result=FAIL
 		;;
 	esac
 
-	cukinia_tests=$((cukinia_tests + 1))
+	case "$result" in
+	PASS)
+		if [ "${__on_success}" ]; then
+			if [ "${__retry}" != 0 ]; then
+				_cukinia_retry $arguments
+				return $ret
+			fi
+		fi
+		cukinia_tests=$((cukinia_tests + 1))
+		_cukinia_result PASS
+		;;
+	FAIL)
+		if [ "${__on_failure}" ]; then
+			if [ "${__retry}" != 0 ]; then
+				_cukinia_retry $arguments
+				return $ret
+			fi
+		fi
+		cukinia_failures=$((cukinia_failures + 1))
+		cukinia_tests=$((cukinia_tests + 1))
+		_cukinia_result FAIL
+		;;
+	esac
 
 	return $ret
 }
@@ -406,6 +442,55 @@ when()
 {
 	local condition="$1"; shift
 	_condition_run "$condition" "$@"
+}
+
+# on: execute statement conditionally to test result
+# arg1: Test result
+# arg2..: command
+on()
+{
+	local test_result="$1"; shift
+	local ret=0
+
+	if [ "$test_result" = "failure" ]; then
+		__on_failure=1
+	elif [ "$test_result" = "success" ]; then
+		__on_success=1
+	fi
+
+	"$@" || ret=1
+	unset __on_failure
+	unset __on_success
+
+	return $ret
+}
+
+# retry: Set a number of retry
+# arg1: the number of retry
+# arg2..: command
+retry()
+{
+	local ret=0
+	__retry="$1"; shift
+
+	"$@" || ret=1
+	unset __retry
+
+	return $ret
+}
+
+# after: Set wait between each retry
+# arg1: the wait time between each retry (in seconds)
+# arg2..: command
+after()
+{
+	local ret=0
+	__wait_time="$1"; shift
+
+	"$@" || ret=1
+	unset __wait_time
+
+	return $ret
 }
 
 # _cukinia_python_pkg: try to import the python package
