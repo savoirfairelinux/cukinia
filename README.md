@@ -53,6 +53,7 @@ A cukinia config file supports the following statements:
   symbol is set to given tristate value
 * ``cukinia_kversion <version>``: Validate kernel version (only check maj.min, e.g 5.14)
 * ``cukinia_process <pname> [user]``: Validates that process runs (optional user)
+* ``cukinia_kprocess <pname>``: Validates that kernel process runs
 * ``cukinia_python_pkg <pkg>``: Validates that Python package is installed
 * ``cukinia_test <expr>``: Validates that test(1) expression is true
 * ``cukinia_http_request <url>``: Validates that url returns a 200 code
