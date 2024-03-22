@@ -44,6 +44,9 @@ GENERIC_FUNCTS='cmd
 # By default log to stdout
 __log_file="/dev/stdout"
 
+# Initialize suite id
+__suite_id=0
+
 # Ensure cleanup of temporary files
 trap cleanup 0
 
@@ -1130,6 +1133,7 @@ _junitxml_end_suite()
 	unset __suite_tests
 	unset __suite_name
 
+	hostname=$(hostname)
 
 	# derive suite duration from the timestamp
 	# note: busybox 1.27 'date' may choke on the iso8601 T format
@@ -1140,11 +1144,23 @@ _junitxml_end_suite()
 
 	# append the whole testsuite block to the outfile
 	cat >>$outfile <<EOF
-  <testsuite name="$name" package="$name" errors="$errors" tests="$tests" failures="$failures" timestamp="$timestamp" time="$seconds">
+  <testsuite name="$name" package="$name" errors="$errors" tests="$tests" id="$__suite_id" hostname="$hostname" failures="$failures" timestamp="$timestamp" time="$seconds">
+    <properties>
+    </properties>
 EOF
 	cat "$__logfile_tmp.$name" >>$outfile
 	rm -f "$__logfile_tmp.$name"
+
+	cat >>"$outfile" <<EOF
+      <system-out><![CDATA[]]></system-out>
+EOF
+
+	cat >>"$outfile" <<EOF
+      <system-err><![CDATA[]]></system-err>
+EOF
+
 	echo "  </testsuite>" >>$outfile
+	__suite_id=$((__suite_id + 1))
 }
 
 # Start a new <testsuite> section
