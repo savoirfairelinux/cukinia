@@ -280,6 +280,7 @@ cukinia_runner()
 		__not="pass"
 	elif [ -n "$__skip_condition" ]; then
 		_cukinia_result SKIP
+		cukinia_skip=$((cukinia_skip + 1))
 		return
 	fi
 
@@ -1103,10 +1104,12 @@ _junitxml_end_suite()
 	# cleanup suite-specific variables
 	timestamp=$__suite_timestamp
 	failures=$__suite_failures
+	skipped=$__suite_skipped
 	errors=$__suite_errors
 	tests=$__suite_tests
 	unset __suite_timestamp
 	unset __suite_failures
+	unset __suite_skipped
 	unset __suite_errors
 	unset __suite_tests
 	unset __suite_name
@@ -1122,7 +1125,7 @@ _junitxml_end_suite()
 
 	# append the whole testsuite block to the outfile
 	cat >>$outfile <<EOF
-  <testsuite name="$name" package="$name" errors="$errors" tests="$tests" id="$__suite_id" hostname="$hostname" failures="$failures" timestamp="$timestamp" time="$seconds">
+  <testsuite name="$name" package="$name" errors="$errors" tests="$tests" id="$__suite_id" hostname="$hostname" failures="$failures" timestamp="$timestamp" skipped="$skipped" time="$seconds">
     <properties>
     </properties>
 EOF
@@ -1172,6 +1175,7 @@ _junitxml_add_suite()
 	__suite_name="$name"
 	__suite_tests=0
 	__suite_errors=0
+	__suite_skipped=0
 	__suite_failures=0
 	__suite_timestamp=$(date +%Y-%m-%dT%H:%M:%S)
 }
@@ -1210,11 +1214,17 @@ _junitxml_add_case()
     <testcase classname="${__log_class:-cukinia}" name="$name" time="0">
 EOF
 
-	if [ "$result" != "PASS" ]; then
+	if [ "$result" == "FAIL" ]; then
 		__suite_failures=$((__suite_failures + 1))
 
 		cat >>"$logfile" <<EOF
       <failure type="unit-test" message="failed"><![CDATA[$message: FAIL]]></failure>
+EOF
+	elif [ "$result" == "SKIP" ]; then
+		__suite_skipped=$((__suite_skipped + 1))
+
+		cat >>"$logfile" <<EOF
+      <skipped message="skipped"><![CDATA[$message: SKIP]]></skipped>
 EOF
 	fi
 
@@ -1323,6 +1333,7 @@ done
 
 cukinia_tests=0
 cukinia_failures=0
+cukinia_skip=0
 cukinia_conf_include "$CUKINIA_CONF"
 
 # Finish logging
