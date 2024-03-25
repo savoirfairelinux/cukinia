@@ -43,6 +43,9 @@ GENERIC_FUNCTS='cmd
 # By default log to stdout
 __log_file="/dev/stdout"
 
+# Initialize suite id
+__suite_id=0
+
 # Ensure cleanup of temporary files
 trap cleanup 0
 
@@ -138,7 +141,7 @@ cukinia_epoch=$(date +%s)
 case "$__log_format" in
 csv)
 	if [ -z "$__no_header" ]; then
-		echo "TEST MESSAGE, RESULT, TEST CLASS, TEST SUITE" >"$__logfile_tmp"
+		echo "TEST MESSAGE, RESULT, TEST CLASS, TEST SUITE, TEST ID" >"$__logfile_tmp"
 	else
 		: >"$__logfile_tmp"
 	fi
@@ -240,7 +243,7 @@ cukinia_log()
 	csv)
 		if _should_log; then
 			message=$(echo $message | sed -e "s/'/\\'/g") # ' -> \'
-			echo "'$message',$result,$__log_class,$__suite_name" >>"$__logfile_tmp"
+			echo "'$message',$result,$__log_class,$__suite_name,$__test_id" >>"$__logfile_tmp"
 		fi
 		;;
 
@@ -277,6 +280,7 @@ cukinia_runner()
 		__not="pass"
 	elif [ -n "$__skip_condition" ]; then
 		_cukinia_result SKIP
+		cukinia_skip=$((cukinia_skip + 1))
 		return
 	fi
 
@@ -315,6 +319,20 @@ cukinia_run_dir()
 		[ -d "$dir" ] || continue
 		_cukinia_run_dir "$dir"
 	done
+}
+
+# id: add a test identifier to easily track it
+# arg1: id name
+# arg2..: command
+id()
+{
+	local ret=0
+	__test_id="$1"; shift
+
+	"$@" || ret=1
+	unset __test_id
+
+	return $ret
 }
 
 # as: change the description of what follows
@@ -442,7 +460,7 @@ _cukinia_result()
 		local suffix=" [$(_colorize yellow2 "unmet condition")]"
 	fi
 
-	cukinia_log "[$result] ${__cukinia_cur_test}${suffix}"
+	cukinia_log "[$result] "${__test_id:+ ${__test_id} --}" ${__cukinia_cur_test}${suffix}"
 }
 
 # _cukinia_cmd: wrapper to any command
@@ -1086,14 +1104,17 @@ _junitxml_end_suite()
 	# cleanup suite-specific variables
 	timestamp=$__suite_timestamp
 	failures=$__suite_failures
+	skipped=$__suite_skipped
 	errors=$__suite_errors
 	tests=$__suite_tests
 	unset __suite_timestamp
 	unset __suite_failures
+	unset __suite_skipped
 	unset __suite_errors
 	unset __suite_tests
 	unset __suite_name
 
+	hostname=$(hostname)
 
 	# derive suite duration from the timestamp
 	# note: busybox 1.27 'date' may choke on the iso8601 T format
@@ -1104,11 +1125,23 @@ _junitxml_end_suite()
 
 	# append the whole testsuite block to the outfile
 	cat >>$outfile <<EOF
-  <testsuite name="$name" package="$name" errors="$errors" tests="$tests" failures="$failures" timestamp="$timestamp" time="$seconds">
+  <testsuite name="$name" package="$name" errors="$errors" tests="$tests" id="$__suite_id" hostname="$hostname" failures="$failures" timestamp="$timestamp" skipped="$skipped" time="$seconds">
+    <properties>
+    </properties>
 EOF
 	cat "$__logfile_tmp.$name" >>$outfile
 	rm -f "$__logfile_tmp.$name"
+
+	cat >>"$outfile" <<EOF
+      <system-out><![CDATA[]]></system-out>
+EOF
+
+	cat >>"$outfile" <<EOF
+      <system-err><![CDATA[]]></system-err>
+EOF
+
 	echo "  </testsuite>" >>$outfile
+	__suite_id=$((__suite_id + 1))
 }
 
 # Start a new <testsuite> section
@@ -1142,6 +1175,7 @@ _junitxml_add_suite()
 	__suite_name="$name"
 	__suite_tests=0
 	__suite_errors=0
+	__suite_skipped=0
 	__suite_failures=0
 	__suite_timestamp=$(date +%Y-%m-%dT%H:%M:%S)
 }
@@ -1180,11 +1214,17 @@ _junitxml_add_case()
     <testcase classname="${__log_class:-cukinia}" name="$name" time="0">
 EOF
 
-	if [ "$result" != "PASS" ]; then
+	if [ "$result" == "FAIL" ]; then
 		__suite_failures=$((__suite_failures + 1))
 
 		cat >>"$logfile" <<EOF
       <failure type="unit-test" message="failed"><![CDATA[$message: FAIL]]></failure>
+EOF
+	elif [ "$result" == "SKIP" ]; then
+		__suite_skipped=$((__suite_skipped + 1))
+
+		cat >>"$logfile" <<EOF
+      <skipped message="skipped"><![CDATA[$message: SKIP]]></skipped>
 EOF
 	fi
 
@@ -1192,11 +1232,21 @@ EOF
 		cat >>"$logfile" <<EOF
       <system-err><![CDATA[$(cat $__stderr_tmp | tr -dc [:print:])]]></system-err>
 EOF
+	> $__stderr_tmp
 	fi
 
 	if [ -s "$__stdout_tmp" ]; then
 		cat >>"$logfile" <<EOF
       <system-out><![CDATA[$(cat $__stdout_tmp | tr -dc [:print:])]]></system-out>
+EOF
+	> $__stdout_tmp
+	fi
+
+	if [ -n "$__test_id" ]; then
+		cat >>"$logfile" <<EOF
+      <properties>
+        <property name="cukinia.id" value="$__test_id"/>
+      </properties>
 EOF
 	fi
 
@@ -1285,6 +1335,7 @@ done
 
 cukinia_tests=0
 cukinia_failures=0
+cukinia_skip=0
 cukinia_conf_include "$CUKINIA_CONF"
 
 # Finish logging
