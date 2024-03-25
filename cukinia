@@ -1254,12 +1254,14 @@ EOF
 		cat >>"$logfile" <<EOF
       <system-err><![CDATA[$(cat $__stderr_tmp | tr -dc [:print:])]]></system-err>
 EOF
+	> $__stderr_tmp
 	fi
 
 	if [ -s "$__stdout_tmp" ]; then
 		cat >>"$logfile" <<EOF
       <system-out><![CDATA[$(cat $__stdout_tmp | tr -dc [:print:])]]></system-out>
 EOF
+	> $__stdout_tmp
 	fi
 
 	if [ -n "$__test_id" ]; then
