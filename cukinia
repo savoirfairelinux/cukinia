@@ -261,6 +261,7 @@ cukinia_log()
 cukinia_runner()
 {
 	local ret
+	local skip_test_count=false
 
 	if [ -n "$__verbose" ]; then
 		if [ "$__log_format" = "junitxml" ]; then
@@ -285,8 +286,12 @@ cukinia_runner()
 		_cukinia_result PASS
 		;;
 	1..0)
-		_cukinia_result FAIL
-		cukinia_failures=$((cukinia_failures + 1))
+		if  [ -z "${__retry}" ] || [ "${__retry}" == 0 ]; then
+			_cukinia_result FAIL
+			cukinia_failures=$((cukinia_failures + 1))
+		else
+			skip_test_count=true
+		fi
 		;;
 	1..*)
 		_cukinia_result PASS
@@ -295,12 +300,18 @@ cukinia_runner()
 		_cukinia_result PASS
 		;;
 	..*)
-		_cukinia_result FAIL
-		cukinia_failures=$((cukinia_failures + 1))
+		if [ -z "${__retry}" ] || [ "${__retry}" == 0 ]; then
+			_cukinia_result FAIL
+			cukinia_failures=$((cukinia_failures + 1))
+		else
+			skip_test_count=true
+		fi
 		;;
 	esac
 
-	cukinia_tests=$((cukinia_tests + 1))
+	if ! $skip_test_count; then
+		cukinia_tests=$((cukinia_tests + 1))
+	fi
 
 	return $ret
 }
@@ -388,6 +399,85 @@ when()
 {
 	local condition="$1"; shift
 	_condition_run "$condition" "$@"
+}
+
+__on_statement_list=("retry")
+
+# on: execute statement conditionally to test result
+# arg1: Test result
+# arg2: Statement to call conditionally to test result
+# arg3..: command
+on()
+{
+	local test_result="$1"; shift
+	local statement="$1"; shift
+	local statement_in_list=false
+	local statement_cmd=""
+
+	for cmd in "${__on_statement_list[@]}"; do
+		if [ "${statement}" == "${cmd}" ]; then
+			statement_in_list=true
+			break
+		fi
+	done
+
+	if ! $statement_in_list; then
+		cukinia_log "[$(_colorize red2 "ERROR")] Statement ${statement} not in on statement list: ${__on_statement_list[@]}"
+		return 1
+	else
+		if [ "${statement}" == "retry" ]; then
+			__retry="$1";
+			statement_cmd+="$1"; shift
+			if [ "$1" == "after" ]; then
+				shift
+				statement_cmd+=" after $1"; shift
+			fi
+		fi
+	fi
+
+	"$@"
+	ret=$?
+	if [ "$test_result" == "success" ]; then
+		if ([ "$ret" -eq "0" ] && [ -z "${__not}" ]) || ([ "$ret" -ne "0" ] && [ "${__not}" == "1" ]); then
+			:
+		fi
+	elif [ "$test_result" == "failure" ]; then
+		if ([ "$ret" -ne "0" ] && [ -z "${__not}" ]) || ([ "$ret" -eq "0" ] && [ "${__not}" == "1" ]); then
+			if [ "${statement}" == "retry" ]; then
+				_retry $statement_cmd "$@"
+			fi
+		fi
+	fi
+
+	return $ret
+}
+
+# _retry: Set a number of retry and wait between each retry before failing (only called by on)
+# arg1: the number of retry
+# arg2: [optional] after keyword
+# arg3: [optional] the wait time between each retry (in seconds) (default: 0)
+# arg4..: command
+_retry()
+{
+	local ret=1
+	local wait_time=0
+	__retry="$1"; shift
+	if [ "$1" == "after" ]; then
+		shift
+		local wait_time="$1"; shift
+	fi
+
+	while (( ret != 0 && __retry > 0))
+	do
+		cukinia_log "Retry \"$__cukinia_cur_test\" in $wait_time second(s)"
+		sleep $wait_time
+		__retry=$((__retry-1))
+		"$@"
+		ret=$?
+	done
+	unset __retry
+
+	return $ret
 }
 
 # _cukinia_python_pkg: try to import the python package
