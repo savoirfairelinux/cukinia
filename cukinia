@@ -31,7 +31,7 @@ GENERIC_FUNCTS='cmd
 		netif_has_ip
 		netif_is_up
 		process
-		kprocess
+		kthread
 		python_pkg
 		symlink
 		sysctl
@@ -566,18 +566,18 @@ _cukinia_process()
 	return 1
 }
 
-# cukinia_kprocess: checks if kernel process $pname runs
-# arg: $1: the kernel process name
-_cukinia_kprocess()
+# cukinia_kthread: checks if kernel thread $pname runs
+# arg: $1: the kernel thread name
+_cukinia_kthread()
 {
 	local pname="$1"
 	local procdir
 	local pid
 
-	_cukinia_prepare "Checking kernel process \"$pname\" ${__not:+NOT }running"
+	_cukinia_prepare "Checking kernel thread \"$pname\" ${__not:+NOT }running"
 
-	# scan /proc to get process name
-        # as some version of pidof do not look for kernel process, use pgrep with exact match
+	# scan /proc to get thread name
+        # as some version of pidof do not look for kernel thread, use pgrep with exact match
 	for pid in $(pgrep -x "$pname"); do
 		# check that it is a kernel threads
                 # null byte is removed from thread cmdline to avoid bash warning
