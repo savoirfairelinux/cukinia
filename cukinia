@@ -579,9 +579,9 @@ _cukinia_kthread()
 	# scan /proc to get thread name
         # as some version of pidof do not look for kernel thread, use pgrep with exact match
 	for pid in $(pgrep -x "$pname"); do
-		# check that it is a kernel threads
-                # null byte is removed from thread cmdline to avoid bash warning
-		[ -z "$(tr -d '\0' < /proc/$pid/cmdline)" ] && return 0
+		# check that it is a kernel thread
+		status_file=/proc/$pid/status
+		grep -q "Name" "$status_file" && ! grep -q "^VmSize" "$status_file" && return 0
 	done
 
 	return 1
