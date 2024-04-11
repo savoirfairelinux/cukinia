@@ -1147,18 +1147,16 @@ _junitxml_end_suite()
 
 	# append the whole testsuite block to the outfile
 	cat >>$outfile <<EOF
-  <testsuite name="$name" package="$name" errors="$errors" tests="$tests" id="$__suite_id" hostname="$hostname" failures="$failures" timestamp="$timestamp" skipped="$skipped" time="$seconds">
-    <properties>
-    </properties>
+  <testsuite name="$name" package="$name" errors="$errors" tests="$tests"
+   id="$__suite_id" hostname="$hostname" failures="$failures"
+   timestamp="$timestamp" skipped="$skipped" time="$seconds">
+    <properties></properties>
 EOF
 	cat "$__logfile_tmp.$name" >>$outfile
 	rm -f "$__logfile_tmp.$name"
 
 	cat >>"$outfile" <<EOF
       <system-out><![CDATA[]]></system-out>
-EOF
-
-	cat >>"$outfile" <<EOF
       <system-err><![CDATA[]]></system-err>
 EOF
 
