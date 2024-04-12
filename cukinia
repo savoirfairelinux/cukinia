@@ -1234,13 +1234,13 @@ _junitxml_add_case()
     <testcase classname="${__log_class:-cukinia}" name="$name" time="0">
 EOF
 
-	if [ "$result" == "FAIL" ]; then
+	if [ "$result" = "FAIL" ]; then
 		__suite_failures=$((__suite_failures + 1))
 
 		cat >>"$logfile" <<EOF
       <failure type="unit-test" message="failed"><![CDATA[$message: FAIL]]></failure>
 EOF
-	elif [ "$result" == "SKIP" ]; then
+	elif [ "$result" = "SKIP" ]; then
 		__suite_skipped=$((__suite_skipped + 1))
 
 		cat >>"$logfile" <<EOF
