@@ -193,6 +193,4 @@ fi
 
 `Copyright (C) 2017-2022 Savoir-faire Linux, Inc.`
 
-Cukinia is released under the Apache 2 license. In addition, it is also
-available under the GNU General Public License, version 3, at the choice of the
-user.
+Cukinia is released under the Apache 2 license.
