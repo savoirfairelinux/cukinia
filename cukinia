@@ -269,8 +269,6 @@ _cukinia_retry()
 	__retry=$((__retry-1))
 	sleep ${__wait_time:-0}
 	cukinia_runner $arguments
-
-	return $ret
 }
 
 # run the test and its context
@@ -323,7 +321,7 @@ cukinia_runner()
 		if [ "${__on_success}" ]; then
 			if [ "${__retry}" != 0 ]; then
 				_cukinia_retry $arguments
-				return $ret
+				return $?
 			fi
 		fi
 		cukinia_tests=$((cukinia_tests + 1))
@@ -333,7 +331,7 @@ cukinia_runner()
 		if [ "${__on_failure}" ]; then
 			if [ "${__retry}" != 0 ]; then
 				_cukinia_retry $arguments
-				return $ret
+				return $?
 			fi
 		fi
 		cukinia_failures=$((cukinia_failures + 1))
