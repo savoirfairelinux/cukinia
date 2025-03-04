@@ -967,7 +967,7 @@ _cukinia_gpio_libgpiod()
 	_cukinia_prepare "Checking if $gpiochip pins are well configured via libgpiod"
 	if [ -n "$input_pins" ]; then
 		for pin in $input_pins; do
-			direction=$(gpioinfo "$gpiochip" | grep -E "line +$pin:" | sed 's/ \+/\//g' | cut -d '/' -f5)
+			direction=$(gpioinfo "$gpiochip" | sed -nE "/line[[:space:]]+$pin:/s/.*[[:space:]](input|output)[[:space:]].*/\1/p")
 			if [ "input" != "$direction" ]; then
 				return 1
 			fi
@@ -975,8 +975,8 @@ _cukinia_gpio_libgpiod()
 	fi
 	if [ -n "$output_low_pins" ]; then
 		for pin in $output_low_pins; do
-			direction=$(gpioinfo "$gpiochip" | grep -E "line +$pin:" | sed 's/ \+/\//g' | cut -d '/' -f5)
-			value=$(gpioinfo "$gpiochip" | grep -E "line +$pin:" | sed 's/ \+/\//g' | cut -d '/' -f6)
+			direction=$(gpioinfo "$gpiochip" | sed -nE "/line[[:space:]]+$pin:/s/.*[[:space:]](input|output)[[:space:]].*/\1/p")
+			value=$(gpioinfo "$gpiochip" | sed -nE "s/.*line[[:space:]]+$pin:.*(active-(low|high)).*/\1/p")
 			if [ "output/active-low" != "$direction/$value" ]; then
 				return 1
 			fi
@@ -984,8 +984,8 @@ _cukinia_gpio_libgpiod()
 	fi
 	if [ -n "$output_high_pins" ]; then
 		for pin in $output_high_pins; do
-			direction=$(gpioinfo "$gpiochip" | grep -E "line +$pin:" | sed 's/ \+/\//g' | cut -d '/' -f5)
-			value=$(gpioinfo "$gpiochip" | grep -E "line +$pin:" | sed 's/ \+/\//g' | cut -d '/' -f6)
+			direction=$(gpioinfo "$gpiochip" | sed -nE "/line[[:space:]]+$pin:/s/.*[[:space:]](input|output)[[:space:]].*/\1/p")
+			value=$(gpioinfo "$gpiochip" | sed -nE "s/.*line[[:space:]]+$pin:.*(active-(low|high)).*/\1/p")
 			if [ "output/active-high" != "$direction/$value" ]; then
 				return 1
 			fi
