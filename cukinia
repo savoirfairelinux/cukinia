@@ -695,9 +695,15 @@ _cukinia_process()
 		[ -n "$puser_uid" ] || return 1
 	fi
 
-	# scan /proc to get process name and optionally process owner
-	for pid in $(pidof "$pname"); do
+	# get all processes with the name of the command (not the full command line)
+	for pid in $(pidof "$(echo "$pname" | awk '{print $1}')"); do
 		procdir="/proc/$pid"
+
+		# get the full command line of the process
+		local cmdline=$(tr "\000" " " < "/proc/$pid/cmdline" | awk '{$1=$1; print}')
+
+		# match exact full command with expected process 
+		[ "$cmdline" = "$pname" ] || continue
 
 		# skip kernel threads
 		[ -x $procdir/exe ] || continue
