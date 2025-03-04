@@ -1118,9 +1118,8 @@ _cukinia_knoerror()
 # arg1: interface name
 _cukinia_netif_is_up() {
 	local interface="$1"
-
 	_cukinia_prepare "Checking if interface \"$interface\" is ${__not:+NOT }up"
-	ip -o link show "$interface" up | grep -q "state UP" 2>&1
+	[ -f "/sys/class/net/$interface/operstate" ] && [ "$(cat /sys/class/net/$interface/operstate)" = "up" ]
 }
 
 # _cukinia_netif_has_ip(): check if an interface has an IP address assigned
