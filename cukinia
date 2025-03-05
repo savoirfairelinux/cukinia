@@ -29,6 +29,7 @@ GENERIC_FUNCTS='cmd
 		mount
 		netif_has_ip
 		netif_is_up
+		process_with_args
 		process
 		kthread
 		python_pkg
@@ -491,6 +492,36 @@ after()
 	return $ret
 }
 
+# check_process: check if a process is running
+# arg1: the process name which should be running
+# arg2: boolean to check the full command line of the process in /proc/$pid/cmdline
+# arg3: [optional] the user name
+check_process(){
+	for pid in $(pidof "$1"); do
+		procdir="/proc/$pid"
+
+		if [[ "$2" -eq 1 ]]; then
+			# get the full command line of the process
+			local cmdline=$(tr "\000" " " < "/proc/$pid/cmdline" | awk '{$1=$1; print}')
+
+			# match exact full command with expected process 
+			[ "$cmdline" = "$pname" ] || continue
+		fi
+
+		# skip kernel threads
+		[ -x $procdir/exe ] || continue
+
+		# process found, no owner check
+		[ -z "$3" ] && return 0
+
+		# check process owner
+		owner_uid=$(awk '/^Uid:/ { print $2 }' < $procdir/status)
+		[ "$owner_uid" = "$puser_uid" ] && return 0
+	done
+
+	return 1
+}
+
 # _cukinia_python_pkg: try to import the python package
 # arg1: the python package
 _cukinia_python_pkg()
@@ -674,6 +705,37 @@ _cukinia_kversion()
 	test "$(uname -r | cut -d. -f1,2)" = "$kver"
 }
 
+# cukinia_process_with_args: checks if process $pname with arguments runs
+# Optional: check if the process exist for a given username $puser
+# arg: $1: the process name
+# arg: $2: [optional] the user name
+_cukinia_process_with_args()
+{
+	local pname="$1"
+	local puser="$2"
+	local puser_uid
+	local owner_uid
+	local procdir
+	local pid
+
+	_cukinia_prepare "Checking process \"$pname\" ${__not:+NOT }running as ${puser:-any user}"
+
+	if [ -n "$puser" ]; then
+		# make sure $puser maps to a valid user
+		puser_uid="$(id -u "$puser" 2>/dev/null)"
+		[ -n "$puser_uid" ] || return 1
+	fi
+
+	# scan /proc to find the full process command, and optionally process owner
+	if [ -n "$puser" ]; then
+		check_process "$(echo "$pname" | awk '{print $1}')" "1"  "$puser"
+	else
+		check_process "$(echo "$pname" | awk '{print $1}')" "1"
+	fi
+
+	return $?
+}
+
 # cukinia_process: checks if process $pname runs
 # Optional: check if the process exist for a given username $puser
 # arg: $1: the process name
@@ -695,29 +757,14 @@ _cukinia_process()
 		[ -n "$puser_uid" ] || return 1
 	fi
 
-	# get all processes with the name of the command (not the full command line)
-	for pid in $(pidof "$(echo "$pname" | awk '{print $1}')"); do
-		procdir="/proc/$pid"
+	# scan /proc to get process name and optionally process owner
+	if [ -n "$puser" ]; then
+		check_process "$pname" "0" "$puser"
+	else
+		check_process "$pname" "0"
+	fi
 
-		# get the full command line of the process
-		local cmdline=$(tr "\000" " " < "/proc/$pid/cmdline" | awk '{$1=$1; print}')
-
-		# match exact full command with expected process 
-		[ "$cmdline" = "$pname" ] || continue
-
-		# skip kernel threads
-		[ -x $procdir/exe ] || continue
-
-		# process found, no owner check
-		[ -z "$puser" ] && return 0
-
-
-		# check process owner
-		owner_uid=$(awk '/^Uid:/ { print $2 }' < $procdir/status)
-		[ "$owner_uid" = "$puser_uid" ] && return 0
-	done
-
-	return 1
+	return $?
 }
 
 # cukinia_kthread: checks if kernel thread $pname runs
