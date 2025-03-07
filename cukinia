@@ -497,26 +497,35 @@ after()
 # arg2: boolean to check the full command line of the process in /proc/$pid/cmdline
 # arg3: [optional] the user name
 check_process(){
-	for pid in $(pidof "$1"); do
+	local process=$1
+	local check_cmdline=$2
+	local user=$3
+	local pidof_cmd
+
+	if [[ $check_cmdline == 1 ]]; then
+		# pidof command needs to be called only with first process name not full command line
+		pidof_cmd="$(echo "$process" | awk '{print $1}')"
+	else
+		# when no full command line check, use the process name directly
+		pidof_cmd="$process"
+	fi
+
+	for pid in $(pidof "$pidof_cmd"); do
 		procdir="/proc/$pid"
-
-		if [[ "$2" -eq 1 ]]; then
-			# get the full command line of the process
-			local cmdline=$(tr "\000" " " < "/proc/$pid/cmdline" | awk '{$1=$1; print}')
-
+		if [[ $check_cmdline -eq 1 ]]; then
 			# match exact full command with expected process 
-			[ "$cmdline" = "$pname" ] || continue
+			[[ "$(tr "\000" " " < "/proc/$pid/cmdline" 2>/dev/null | awk '{$1=$1; print}')" == "$process" ]] || continue
 		fi
 
 		# skip kernel threads
 		[ -x $procdir/exe ] || continue
 
 		# process found, no owner check
-		[ -z "$3" ] && return 0
+		[ -z "$user" ] && return 0
 
 		# check process owner
 		owner_uid=$(awk '/^Uid:/ { print $2 }' < $procdir/status)
-		[ "$owner_uid" = "$puser_uid" ] && return 0
+		[ "$owner_uid" = "$user" ] && return 0
 	done
 
 	return 1
@@ -724,13 +733,10 @@ _cukinia_process_with_args()
 		# make sure $puser maps to a valid user
 		puser_uid="$(id -u "$puser" 2>/dev/null)"
 		[ -n "$puser_uid" ] || return 1
-	fi
-
-	# scan /proc to find the full process command, and optionally process owner
-	if [ -n "$puser" ]; then
-		check_process "$(echo "$pname" | awk '{print $1}')" "1"  "$puser"
+		# scan /proc to find the full process command, and optionally process owner
+		check_process "$pname" "1" "$puser"
 	else
-		check_process "$(echo "$pname" | awk '{print $1}')" "1"
+		check_process "$pname" "1"
 	fi
 
 	return $?
@@ -755,10 +761,7 @@ _cukinia_process()
 		# make sure $puser maps to a valid user
 		puser_uid="$(id -u "$puser" 2>/dev/null)"
 		[ -n "$puser_uid" ] || return 1
-	fi
-
-	# scan /proc to get process name and optionally process owner
-	if [ -n "$puser" ]; then
+		# scan /proc to get process name and optionally process owner
 		check_process "$pname" "0" "$puser"
 	else
 		check_process "$pname" "0"
