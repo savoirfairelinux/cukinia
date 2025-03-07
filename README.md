@@ -65,6 +65,7 @@ A cukinia config file supports the following statements:
 * ``cukinia_systemd_failed``: Raise a failure if a systemd unit is in failed state
 * ``cukinia_systemd_unit <unit>``: Validate systemd unit is active
 * ``cukinia_i2c <bus_number> [device_address] [driver_name]``: This checks i2c bus or (optional) device, and (optionally) verifies it uses the indicated driver
+* ``cukinia_imx6_fuse <bank> <word> [mask] <value>``: This checks the value of a fuse word on an i.MX6 SoC
 * ``cukinia_gpio_libgpiod -i [input_pins] -l [output_low_pins] -h [output_high_pins]
   -g [gpiochip](default:gpiochip0)``: Validate the gpio configuration via libgpiod
   (ex: cukinia_gpio_libgpiod -i "0 3 4" -l "10" -h "2 50" -g gpiochip1)
