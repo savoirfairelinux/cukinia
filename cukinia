@@ -162,11 +162,9 @@ junitxml)
 esac
 
 # Take config file as first trailing argument
-if [ -r "$1" ]; then
-	CUKINIA_CONF="$1"
-	if [ "$(dirname "$CUKINIA_CONF")" = "." ]; then
-		CUKINIA_CONF="./$CUKINIA_CONF"
-	fi
+CUKINIA_CONF="$1"
+if [ "$(dirname "$CUKINIA_CONF")" = "." ]; then
+	CUKINIA_CONF="./$CUKINIA_CONF"
 fi
 
 # Use this file to override default config
@@ -185,8 +183,8 @@ cukinia_conf_include()
 		# in this case, we load every file in it!
 
 		if [ ! -r "$f" ]; then
-			echo >&2 "cukinia: warning: can't include \"$f\""
-			continue
+			echo >&2 "cukinia: FATAL: can't include \"$f\""
+			exit 1
 		fi
 		. "$f"
 	done
