@@ -39,3 +39,10 @@ load '/usr/lib/bats/bats-assert/load'
     assert_line --regexp '.*FAIL.*  Checking if systemd unit "nosuchunit.service" is active.*'
     assert_line --regexp '.*FAIL.*  SWR_003 -- Running "false" is successful.*'
 }
+
+@test "Cukinia Junit XML validation" {
+    run ./cukinia tests/xml/lint.conf
+    assert_success
+    run ./cukinia tests/xml/xml.conf
+    assert_success
+}
