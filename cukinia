@@ -895,11 +895,17 @@ _cukinia_mount()
 {
 	local device="$1"
 	local mountpoint="$2"
-	shift 2
-	local fstype="$1"; shift
-	local options="$*"
+	local fstype="$3"
+	local options
 	local found=0
 	local result
+
+	if [ "$#" -gt 3 ]; then
+		shift 3
+		options="$*"
+	else
+		shift 2
+	fi
 
 	_cukinia_prepare "Checking $device on $mountpoint type ${fstype:-any} (${options:-any}) ${__not:+NOT} mounted"
 
