@@ -104,7 +104,7 @@ unless "on_eval_board" \
 
 when "arch_is_arm64" \
   unless "on_eval_board" \
-    cukinia_kmod some_driver 
+    cukinia_kmod some_driver
 ```
 * `on <test_result> <statement>`: Can execute a statemement conditionally to test result
 For each test result some statements can be executed:
@@ -199,6 +199,14 @@ else
 	cukinia_log "$(_colorize red "myapp not found :(")"
 fi
 
+```
+
+## Development
+
+Cukinia is validated using `bats`. The non-regression tests can be run with:
+
+```shell
+bats bats/cukinia.bats
 ```
 
 ## License
