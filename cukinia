@@ -1197,7 +1197,7 @@ _cukinia_netif_has_ip() {
 		regex="$regex.*$extra_flags"
 	fi
 
-	_cukinia_prepare "Checking interface \"$interface\" has ${__not:+NO }ipv${family_arg:1} assigned ${extra_flags:+($extra_flags)}"
+	_cukinia_prepare "Checking interface \"$interface\" has ${__not:+NO }ipv${family_arg##-} assigned ${extra_flags:+($extra_flags)}"
 	ip -o $family_arg addr show dev "$interface" | grep -q "$regex"
 }
 
