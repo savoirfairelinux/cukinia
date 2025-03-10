@@ -499,8 +499,18 @@ check_process(){
 	local check_cmdline=$2
 	local user=$3
 	local pidof_cmd
+	local procdir
+	local owner_uid
+	local user_uid
 
-	if [[ $check_cmdline == 1 ]]; then
+	[ "$check_cmdline" = "1" ] && check_cmdline=true || check_cmdline=false
+
+	if [ -n "$user" ]; then
+		# make sure $user maps to a valid user
+		user_uid="$(/usr/bin/id -u "$user" 2>/dev/null)" # Use full path to id, because it has been defined as a cukinia function...
+	fi
+
+	if $check_cmdline; then
 		# pidof command needs to be called only with first process name not full command line
 		pidof_cmd="$(echo "$process" | awk '{print $1}')"
 	else
@@ -510,9 +520,9 @@ check_process(){
 
 	for pid in $(pidof "$pidof_cmd"); do
 		procdir="/proc/$pid"
-		if [[ $check_cmdline -eq 1 ]]; then
+		if $check_cmdline; then
 			# match exact full command with expected process 
-			[[ "$(tr "\000" " " < "/proc/$pid/cmdline" 2>/dev/null | awk '{$1=$1; print}')" == "$process" ]] || continue
+			[ "$(tr "\000" " " < "/proc/$pid/cmdline" 2>/dev/null | awk '{$1=$1; print}')" = "$process" ] || continue
 		fi
 
 		# skip kernel threads
@@ -523,7 +533,7 @@ check_process(){
 
 		# check process owner
 		owner_uid=$(awk '/^Uid:/ { print $2 }' < $procdir/status)
-		[ "$owner_uid" = "$user" ] && return 0
+		[ "$owner_uid" = "$user_uid" ] && return 0
 	done
 
 	return 1
@@ -720,22 +730,10 @@ _cukinia_process_with_args()
 {
 	local pname="$1"
 	local puser="$2"
-	local puser_uid
-	local owner_uid
-	local procdir
-	local pid
 
 	_cukinia_prepare "Checking process \"$pname\" ${__not:+NOT }running as ${puser:-any user}"
 
-	if [ -n "$puser" ]; then
-		# make sure $puser maps to a valid user
-		puser_uid="$(id -u "$puser" 2>/dev/null)"
-		[ -n "$puser_uid" ] || return 1
-		# scan /proc to find the full process command, and optionally process owner
-		check_process "$pname" "1" "$puser"
-	else
-		check_process "$pname" "1"
-	fi
+	check_process "$pname" "1" "$puser"
 
 	return $?
 }
@@ -748,22 +746,10 @@ _cukinia_process()
 {
 	local pname="$1"
 	local puser="$2"
-	local puser_uid
-	local owner_uid
-	local procdir
-	local pid
 
 	_cukinia_prepare "Checking process \"$pname\" ${__not:+NOT }running as ${puser:-any user}"
 
-	if [ -n "$puser" ]; then
-		# make sure $puser maps to a valid user
-		puser_uid="$(id -u "$puser" 2>/dev/null)"
-		[ -n "$puser_uid" ] || return 1
-		# scan /proc to get process name and optionally process owner
-		check_process "$pname" "0" "$puser"
-	else
-		check_process "$pname" "0"
-	fi
+	check_process "$pname" "0" "$puser"
 
 	return $?
 }
