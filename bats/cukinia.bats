@@ -17,13 +17,13 @@ load '/usr/lib/bats/bats-assert/load'
     assert_line --regexp '.*SKIP.*  Should skip*'
     assert_line --regexp '.*etry.*"Should pass and retry 1 time" in 2s.*'
     assert_line --regexp '.*PASS.*  Should pass and retry 1 time.*'
-    
+
     assert_line --regexp '^ran .* tests.*$'
 }
 
 @test "Run cukinia testcases-failure {
     run sh ./cukinia tests/testcases-failure.conf
-    
+
     assert_line --regexp '.*FAIL.*  Checking if gpiochip0 pins are well configured via libgpiod.*'
     assert_line --regexp '.*FAIL.*  Checking if gpiochip0 pins are well configured via sysfs.*'
 
@@ -38,4 +38,11 @@ load '/usr/lib/bats/bats-assert/load'
     assert_line --regexp '.*FAIL.*  Checking link "/dev/zero" does point to "/dev/null".*'
     assert_line --regexp '.*FAIL.*  Checking if systemd unit "nosuchunit.service" is active.*'
     assert_line --regexp '.*FAIL.*  SWR_003 -- Running "false" is successful.*'
+}
+
+@test "Cukinia Junit XML validation" {
+    run sh ./cukinia tests/xml/lint.conf
+    assert_success
+    run sh ./cukinia tests/xml/xml.conf
+    assert_success
 }
