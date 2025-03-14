@@ -206,6 +206,7 @@ fi
 Cukinia is validated using `bats`. The non-regression tests can be run with:
 
 ```shell
+git submodule update --init
 bats bats/cukinia.bats
 ```
 

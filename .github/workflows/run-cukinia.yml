@@ -8,6 +8,8 @@ jobs:
         steps:
             - name: Checkout repository
               uses: actions/checkout@v2
+              with:
+                submodules: true
             - name: Install dependencies
               run: sudo apt-get update && sudo apt-get install -y wget iproute2 bats bats-assert shellcheck libxml2-utils
             # TODO fix shellcheck errors
