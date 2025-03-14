@@ -2,6 +2,84 @@
 
 load '/usr/lib/bats/bats-support/load'
 load '/usr/lib/bats/bats-assert/load'
+load './bats-mock/stub.bash'
+
+setup() {
+    # Mocking commands to pass in CI
+    BATS_MOCK_BINDIR="$BATS_TEST_TMPDIR/bin"
+    mkdir -p "$BATS_MOCK_BINDIR"
+    export PATH="$BATS_MOCK_BINDIR:$PATH"
+
+    # Mock cukinia_cmdline
+    cat <<'EOF' >"$BATS_MOCK_BINDIR/grep"
+#!/bin/bash
+if [[ "$1 $2" =~ (^|\ )quiet(\ |$) ]]; then
+    exit 0
+else
+    /bin/grep "$@"
+fi
+EOF
+    chmod +x "$BATS_MOCK_BINDIR/grep"
+
+    # Mock cukinia_http_request
+    cat <<'EOF' >"$BATS_MOCK_BINDIR/wget"
+#!/bin/sh
+if [ "$1 $2 $3 $4" = "-q -O /dev/null http://localhost:631/" ]; then
+    exit 0
+else
+    /usr/bin/wget "$@"
+fi
+EOF
+    chmod +x "$BATS_MOCK_BINDIR/wget"
+
+    # Mock cukinia_kmod
+    cat <<'EOF' >"$BATS_MOCK_BINDIR/grep"
+#!/bin/bash
+if [[ "$1 $2" =~ ^inet_diag\ /proc/modules ]]; then
+    exit 0
+else
+    /bin/grep "$@"
+fi
+EOF
+    chmod +x "$BATS_MOCK_BINDIR/grep"
+
+    # Mock cukinia_listen4
+    cat <<'EOF' >"$BATS_MOCK_BINDIR/netstat"
+#!/bin/sh
+if [ "$1 $2 $3" = "-lnt tcp 631" ]; then
+    exit 0
+elif [ "$1 $2 $3" = "-lnu udp 5353" ]; then
+    exit 0
+elif [ "$1 $2 $3" = "-lntu any 67" ];then
+    exit 0
+else
+    /bin/netstat "$@"
+fi
+EOF
+    chmod +x "$BATS_MOCK_BINDIR/netstat"
+
+    # Mock cukinia_netif_has_ip
+    cat <<'EOF' >"$BATS_MOCK_BINDIR/ip"
+#!/bin/sh
+if [ "$1 $2 $3 $4 $5 $6 $7" = "-o -4 addr show dev $gw_if dynamic" ]; then
+    exit 0
+else
+    /sbin/ip "$@"
+fi
+EOF
+    chmod +x "$BATS_MOCK_BINDIR/ip"
+
+    # Mock cukinia_systemd_unit
+    cat <<'EOF' >"$BATS_MOCK_BINDIR/systemctl"
+#!/bin/sh
+if [ "$1 $2" = "is-active atd.service" ]; then
+    exit 0
+else
+    /bin/systemctl "$@"
+fi
+EOF
+    chmod +x "$BATS_MOCK_BINDIR/systemctl"
+}
 
 @test "Run cukinia testcases" {
     run ./cukinia tests/testcases.conf
@@ -21,7 +99,7 @@ load '/usr/lib/bats/bats-assert/load'
     assert_line --regexp '^ran .* tests.*$'
 }
 
-@test "Run cukinia testcases-failure {
+@test "Run cukinia testcases-failure" {
     run sh ./cukinia tests/testcases-failure.conf
 
     assert_line --regexp '.*FAIL.*  Checking if gpiochip0 pins are well configured via libgpiod.*'
