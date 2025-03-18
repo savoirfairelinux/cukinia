@@ -84,7 +84,8 @@ A cukinia config file supports the following statements:
   ``[!]`` is appended to the default test description)
 * ``verbose``: Can prefix any test to preserve stdout/stderr
 * ``as <string>``: Can prefix any test to change its textual description
-* ``id <string>``: Can prefix any test to add a test id in the different outputs
+* ``test_id <string>``: Can prefix any test to add a test id in the different outputs
+* ``id <string>``: DEPRECATED, was replaced by `test_id` after cukinia-v0.7.0
 
 ### Condition statements
 

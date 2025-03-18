@@ -354,10 +354,10 @@ cukinia_run_dir()
 	done
 }
 
-# id: add a test identifier to easily track it
+# test_id: add a test identifier to easily track it
 # arg1: id name
 # arg2..: command
-id()
+test_id()
 {
 	local ret=0
 	__test_id="$1"; shift
@@ -507,7 +507,7 @@ check_process(){
 
 	if [ -n "$user" ]; then
 		# make sure $user maps to a valid user
-		user_uid="$(/usr/bin/id -u "$user" 2>/dev/null)" # Use full path to id, because it has been defined as a cukinia function...
+		user_uid="$(id -u "$user" 2>/dev/null)" # Use full path to id, because it has been defined as a cukinia function...
 	fi
 
 	if $check_cmdline; then
