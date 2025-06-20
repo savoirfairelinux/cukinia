@@ -84,7 +84,8 @@ A cukinia config file supports the following statements:
   ``[!]`` is appended to the default test description)
 * ``verbose``: Can prefix any test to preserve stdout/stderr
 * ``as <string>``: Can prefix any test to change its textual description
-* ``id <string>``: Can prefix any test to add a test id in the different outputs
+* ``test_id <string>``: Can prefix any test to add a test id in the different outputs
+* ``id <string>``: DEPRECATED, was replaced by `test_id` after cukinia-v0.7.0
 
 ### Condition statements
 
@@ -104,7 +105,7 @@ unless "on_eval_board" \
 
 when "arch_is_arm64" \
   unless "on_eval_board" \
-    cukinia_kmod some_driver 
+    cukinia_kmod some_driver
 ```
 * `on <test_result> <statement>`: Can execute a statemement conditionally to test result
 For each test result some statements can be executed:
@@ -199,6 +200,15 @@ else
 	cukinia_log "$(_colorize red "myapp not found :(")"
 fi
 
+```
+
+## Development
+
+Cukinia is validated using `bats`. The non-regression tests can be run with:
+
+```shell
+git submodule update --init
+bats bats/cukinia.bats
 ```
 
 ## License
