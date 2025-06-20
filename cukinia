@@ -21,6 +21,7 @@ GENERIC_FUNCTS='cmd
 		group
 		http_request
 		i2c
+		imx6_fuse
 		kconf
 		kmod
 		knoerror
@@ -976,6 +977,42 @@ _cukinia_i2c()
 
 	[ "$(readlink -f "$link")" = "$(readlink -f "$target")" ] && return 0 || return 1
 }
+
+_cukinia_imx6_fuse()
+{
+    local bank="$1"
+    local word="$2"
+    local skip="$((bank * 8 + word))"
+    local mask
+    local test_value
+    local value
+
+    if [ $# -gt 3 ]; then
+        mask="$3"
+        test_value="$4"
+    else
+        test_value="$3"
+    fi
+
+    if [ -z "$mask" ]; then
+        _cukinia_prepare "Checking i.MX6 fuse bank $bank word $word is ${__not:+NOT }set to $test_value"
+    else
+        _cukinia_prepare "Checking i.MX6 fuse bank $bank word $word is ${__not:+NOT }set to $test_value (masked by $mask)"
+    fi
+
+    if [ ! -f /sys/bus/nvmem/devices/imx-ocotp0/nvmem ]; then
+        return 1
+    fi
+
+    value=0x$(dd status=none if=/sys/bus/nvmem/devices/imx-ocotp0/nvmem of=/dev/stdout bs=4 count=1 skip="$skip" 2> /dev/null | hexdump -v -e '4/4 "%08x" "\n"' | tr -d ' ')
+
+    if [ -n "$mask" ]; then
+        value=$(($value & $mask))
+    fi
+
+    [ $(($value)) = $(($test_value)) ] && return 0 || return 1
+}
+
 
 # _cukinia_gpio_libgpiod: Check gpio configuration via libgpiod
 # arg1: (optional) the pins configured in input
