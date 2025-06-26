@@ -898,7 +898,8 @@ _cukinia_mount()
 	local device="$1"
 	local mountpoint="$2"
 	shift 2
-	local fstype="$1"; shift
+	local fstype="$1"
+	[ $# -gt 0 ] && shift
 	local options="$*"
 	local found=0
 	local result
@@ -1193,7 +1194,7 @@ _cukinia_netif_has_ip() {
 		regex="$regex.*$extra_flags"
 	fi
 
-	_cukinia_prepare "Checking interface \"$interface\" has ${__not:+NO }ipv${family_arg:1} assigned ${extra_flags:+($extra_flags)}"
+	_cukinia_prepare "Checking interface \"$interface\" has ${__not:+NO }ipv$(echo "${family_arg}" | cut -c 2-) assigned ${extra_flags:+($extra_flags)}"
 	ip -o $family_arg addr show dev "$interface" | grep -q "$regex"
 }
 
