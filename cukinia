@@ -10,7 +10,7 @@
 CUKINIA_VERSION="0.8.1-dev"
 
 # Default configuration file
-CUKINIA_CONF='/etc/cukinia/cukinia.conf'
+DEFAULT_CONFIG_FILE='/etc/cukinia/cukinia.conf'
 
 # Generic user functions templated to _cukinia_xxx()
 GENERIC_FUNCTS='cmd
@@ -161,13 +161,23 @@ junitxml)
 	;;
 esac
 
-# Take config file as first trailing argument
-CUKINIA_CONF="$1"
-if [ "$(dirname "$CUKINIA_CONF")" = "." ]; then
-	CUKINIA_CONF="./$CUKINIA_CONF"
+# Read config from optional 1st trailing argument
+if [ -z "$1" ]; then
+	config_file="$DEFAULT_CONFIG_FILE"
+else
+	if [ ! -r "$1" ]; then
+		echo "Fatal: cannot read specified config file ($1)"
+		exit 1
+	fi
+
+	config_file="$1"
 fi
 
-# Use this file to override default config
+if [ "$(dirname "$config_file")" = "." ]; then
+	config_file="./$config_file"
+fi
+
+# Use this file to override default environment/variables
 if [ -r /etc/default/cukinia ]; then
 	. /etc/default/cukinia
 fi
@@ -1483,7 +1493,7 @@ done
 cukinia_tests=0
 cukinia_failures=0
 cukinia_skip=0
-cukinia_conf_include "$CUKINIA_CONF"
+cukinia_conf_include "$config_file"
 
 # Finish logging
 case "$__log_format" in
