@@ -213,6 +213,6 @@ bats bats/cukinia.bats
 
 ## License
 
-`Copyright (C) 2017-2024 Savoir-faire Linux, Inc.`
+`Copyright (C) 2017-2025 Savoir-faire Linux, Inc.`
 
 Cukinia is released under the Apache 2 license.
