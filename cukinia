@@ -896,7 +896,7 @@ _cukinia_mount()
 	local found=0
 	local result
 
-	if [ "$#" -gt 3 ]; then
+	if [ "$#" -ge 3 ]; then
 		shift 3
 		options="$*"
 	else
