@@ -1,5 +1,3 @@
-logging prefix "cukinia: "
-
 cukinia_user www-data
 cukinia_user mysql
 cukinia_user_memberof $USER sudo
