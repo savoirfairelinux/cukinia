@@ -4,7 +4,7 @@
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![Latest Release](https://img.shields.io/github/v/release/savoirfairelinux/cukinia)](https://github.com/savoirfairelinux/cukinia/releases)
-[![Run Cukinia Testts](https://github.com/savoirfairelinux/cukinia/actions/workflows/run-cukinia.yml/badge.svg)](https://github.com/savoirfairelinux/cukinia/actions/workflows/run-cukinia.yml)
+[![Cukinia Test Suite](https://github.com/savoirfairelinux/cukinia/actions/workflows/run-cukinia.yml/badge.svg)](https://github.com/savoirfairelinux/cukinia/actions/workflows/run-cukinia.yml)
 
 # Cukinia Test Framework
 
