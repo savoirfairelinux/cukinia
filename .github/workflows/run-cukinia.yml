@@ -1,4 +1,4 @@
-name: Run Cukinia Tests
+name: Cukinia Test Suite
 
 on: [push]
 
@@ -15,5 +15,5 @@ jobs:
             # TODO fix shellcheck errors
             - name: Lint code
               run: shellcheck -e SC1090,SC2027,SC2034,SC2046,SC2059,SC2060,SC2086,SC2124,SC2155,SC2188,SC3043,SC1091,SC2143,SC2026 ./cukinia
-            - name: Run Cukinia Tests
+            - name: Cukinia Test Suite
               run: bats bats/cukinia.bats
