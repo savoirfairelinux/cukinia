@@ -424,11 +424,12 @@ _condition_run()
 {
 	local ret=0
 
+	__condition_string="$1"
 	eval "$1" >/dev/null || __skip_condition=1
 	shift
 
 	"$@" || ret=1
-	unset __skip_condition
+	unset __skip_condition __condition_string
 
 	return $ret
 }
@@ -598,7 +599,7 @@ _cukinia_result()
 	esac
 
 	if [ "$__skip_condition" ]; then
-		local suffix=" [$(_colorize yellow2 "unmet condition")]"
+		local suffix=" [$(_colorize yellow2 "unmet condition: $__condition_string")]"
 	fi
 
 	cukinia_log "[$result] "${__test_id:+ ${__test_id} --}" ${__cukinia_cur_test}${suffix}"
