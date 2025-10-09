@@ -53,10 +53,13 @@ trap cleanup 0
 # Cleanup of temporary files
 cleanup()
 {
-	rm -f $__stderr_tmp $__stdout_tmp $__logfile_tmp $__junitfile_tmp
+	rm -f $__stderr_tmp $__stdout_tmp $__junitfile_tmp
 
-	if [ -n "$__logfile_tmp" ]; then
-		rm -f $__logfile_tmp.*
+	if [ -n "$__logfile_csv_tmp" ]; then
+		rm -f $__logfile_csv_tmp.*
+	fi
+	if [ -n "$__logfile_junitxml_tmp" ]; then
+		rm -f $__logfile_junitxml_tmp.*
 	fi
 }
 
@@ -78,9 +81,9 @@ USAGE:
 OPTIONS:
 	-h, --help	display this message
 	-v, --version	display the version string
-	-o <file>	output results to <file>
-	-f <format>	set output format to <format>, currently supported:
-       			csv junitxml
+	-o <prefix>	output results to <prefix>.ext (format-specific extensions added automatically)
+	-f format[,format..]	set output format(s). Currently supported:
+				csv junitxml
 	--no-header	do not print headers in concerned output formats
 	--trace         trace execution (for debugging)
 EOF
@@ -93,7 +96,7 @@ while getopts ":o:f:hv-:" opt; do
 		__log_file=$OPTARG
 		;;
 	f)
-		__log_format=$OPTARG
+		__log_formats=$(echo "$OPTARG" | tr ',' ' ')
 		;;
 	h)
 		usage
@@ -133,33 +136,52 @@ done
 shift $((OPTIND-1))
 
 # Temporary files
-__logfile_tmp=$(mktemp)
 __stderr_tmp=$(mktemp)
 __stdout_tmp=$(mktemp)
 
 # Init logging
 cukinia_epoch=$(date +%s)
-case "$__log_format" in
-csv)
-	if [ -z "$__no_header" ]; then
-		echo "TEST MESSAGE, RESULT, TEST CLASS, TEST SUITE, TEST ID" >"$__logfile_tmp"
-	else
-		: >"$__logfile_tmp"
-	fi
-	;;
 
-junitxml)
+# add_csv_header: Add a header to the CSV file output
+add_csv_header() {
+	if [ -z "$__no_header" ]; then
+		echo "TEST MESSAGE, RESULT, TEST CLASS, TEST SUITE, TEST ID" >"$__logfile_csv_tmp"
+	else
+		: >"$__logfile_csv_tmp"
+	fi
+}
+
+# check_junit_output: Ensures that the JUnit XML output is directed to a file
+check_junit_output() {
 	if [ "$__log_file" = "/dev/stdout" ]; then
 		usage
 		echo "Fatal: junitxml requires -o <file>"
 		exit 1
 	fi
-	;;
+}
 
-*)
-	: >"$__logfile_tmp"
-	;;
-esac
+# parse_output_format: Set up logging formats based on user-specified formats
+parse_output_format() {
+	for format in $__log_formats; do
+		case "$format" in
+		csv)
+			__logfile_csv_tmp=$(mktemp)
+			add_csv_header
+			;;
+		junitxml)
+			__logfile_junitxml_tmp=$(mktemp)
+			check_junit_output
+			;;
+		*)
+			echo "cukinia: $format: unsupported output format"
+			;;
+		esac
+	done
+}
+
+if [ -n "$__log_formats" ]; then
+	parse_output_format
+fi
 
 # Read config from optional 1st trailing argument
 if [ -z "$1" ]; then
@@ -212,19 +234,29 @@ logging()
 		__log_pfx="$*"
 		;;
 	class)
-		if [ -n "$__log_format" ]; then
+		if [ -n "$__log_formats" ]; then
 			shift
 			__log_class="$*"
 		fi
 		;;
 	suite)
-		if [ "$__log_format" = "junitxml" ]; then
-			shift
-			_junitxml_add_suite "$1"
-		elif [ "$__log_format" = "csv" ]; then
-			shift
-			__suite_name="$*"
-		fi
+		shift
+		__tmp_suite_name="$*"
+		for format in $__log_formats; do
+			case "$format" in
+			csv)
+				__suite_name="$__tmp_suite_name"
+				;;
+			junitxml)
+				_junitxml_add_suite "$__tmp_suite_name"
+				;;
+			*)
+				cukinia_log "logging: invalid format used"
+				return 1
+				;;
+			esac
+		done
+		unset __tmp_suite_name
 		;;
 	*)
 		cukinia_log "logging: invalid parameter"
@@ -248,24 +280,33 @@ cukinia_log()
 		return 1
 	}
 
-	case "$__log_format" in
-	csv)
-		if _should_log; then
-			message=$(echo $message | sed -e "s/'/\\'/g") # ' -> \'
-			echo "'$message',$result,$__log_class,$__suite_name,$__test_id" >>"$__logfile_tmp"
-		fi
-		;;
+	_log_csv() {
+		message=$(echo $message | sed -e "s/'/\\'/g") # ' -> \'
+		echo "'$message',$result,$__log_class,$__suite_name,$__test_id" >>"$__logfile_csv_tmp"
+	}
 
-	junitxml)
-		if _should_log; then
-			_junitxml_add_case "$message" "$result"
-		fi
-		;;
-
-	*)
+	if [ -n "$__log_formats" ]; then
+		for format in $__log_formats; do
+			case "$format" in
+			csv)
+				if _should_log; then
+					_log_csv
+				fi
+				;;
+			junitxml)
+				if _should_log; then
+					_junitxml_add_case "$message" "$result"
+				fi
+				;;
+			*)
+				echo "${__log_pfx}$*"
+				;;
+			esac
+		done
+	else
+		# Default behavior: console output
 		echo "${__log_pfx}$*"
-		;;
-	esac
+	fi
 }
 
 # Retry current cukinia test with optionnal delay
@@ -289,10 +330,10 @@ cukinia_runner()
 	local arguments="$@"
 
 	if [ -n "$__verbose" ]; then
-		if [ "$__log_format" = "junitxml" ]; then
-			"$@" 1>$__stdout_tmp 2>$__stderr_tmp
-		else
+		if [ "$__log_formats" = "csv" ]; then
 			"$@"
+		else
+			"$@" 1>$__stdout_tmp 2>$__stderr_tmp
 		fi
 	else
 		"$@" >/dev/null 2>&1
@@ -584,12 +625,16 @@ _cukinia_result()
 {
 	local result="$1"
 
-	case "$__log_format" in
-	csv|junitxml)
-		cukinia_log "$__cukinia_cur_test" "$result"
-		return
-		;;
-	esac
+	if [ -n "$__log_formats" ]; then
+		for format in $__log_formats; do
+			case "$format" in
+			csv|junitxml)
+				cukinia_log "$__cukinia_cur_test" "$result"
+				return
+				;;
+			esac
+		done
+	fi
 
 	case "$result" in
 	PASS) result=$(_colorize green "PASS") ;;
@@ -1289,8 +1334,8 @@ _junitxml_end_suite()
    timestamp="$timestamp" skipped="$skipped" time="$seconds">
     <properties></properties>
 EOF
-	cat "$__logfile_tmp.$name" >>$outfile
-	rm -f "$__logfile_tmp.$name"
+	cat "$__logfile_junitxml_tmp.$name" >>$outfile
+	rm -f "$__logfile_junitxml_tmp.$name"
 
 	cat >>"$outfile" <<EOF
       <system-out><![CDATA[]]></system-out>
@@ -1321,7 +1366,7 @@ _junitxml_add_suite()
 
 	# close the previous suite if adding a new one
 	if [ -n "$__suite_name" ]; then
-		_junitxml_end_suite $__logfile_tmp
+		_junitxml_end_suite $__logfile_junitxml_tmp
 	fi
 
 
@@ -1355,7 +1400,7 @@ _junitxml_add_case()
 	fi
 
 	suite="$__suite_name"
-	logfile="$__logfile_tmp.$suite"
+	logfile="$__logfile_junitxml_tmp.$suite"
 
 	# escape all forbidden chars in xml {", ', <, >, &}
 	name=$(echo $message | sed -e "
@@ -1420,7 +1465,7 @@ _colorize()
 	local nc='\033[0m'
 	local c
 
-	if [ -n "$__log_format" ] || [ "$__log_file" != "/dev/stdout" ]; then
+	if [ -n "$__log_formats" ] || [ "$__log_file" != "/dev/stdout" ]; then
 		printf "%s" "$text"
 		return
 	fi
@@ -1496,17 +1541,21 @@ cukinia_skip=0
 cukinia_conf_include "$config_file"
 
 # Finish logging
-case "$__log_format" in
-junitxml)
-	__junitfile_tmp=$(mktemp)
-	_junitxml_start "$__junitfile_tmp"
-	cat "$__logfile_tmp" >>"$__junitfile_tmp"
-	_junitxml_end "$__junitfile_tmp"
-	cat "$__junitfile_tmp" >"$__log_file"
-	;;
-csv)
-	cat "$__logfile_tmp" >"$__log_file"
-	;;
-esac
+if [ -n "$__log_formats" ]; then
+	for format in $__log_formats; do
+		case "$format" in
+		junitxml)
+			__junitfile_tmp=$(mktemp)
+			_junitxml_start "$__junitfile_tmp"
+			cat "$__logfile_junitxml_tmp" >>"$__junitfile_tmp"
+			_junitxml_end "$__junitfile_tmp"
+			cat "$__junitfile_tmp" >"$__log_file".xml
+			;;
+		csv)
+			cat "$__logfile_csv_tmp" >"$__log_file".csv
+			;;
+		esac
+	done
+fi
 
 [ $cukinia_failures -eq 0 ] && exit 0 || exit 1
