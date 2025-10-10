@@ -69,6 +69,18 @@ fi
 EOF
     chmod +x "$BATS_MOCK_BINDIR/ip"
 
+    # Mock cukinia_wifi_is_connected
+    cat <<'EOF' >"$BATS_MOCK_BINDIR/iw"
+#!/bin/sh
+if [ "$1 $2 $3" = "dev dummy0 link" ]; then
+    echo "Connected to aa:bb:cc:dd:ee:ff (on dummy0)"
+    exit 0
+else
+    /usr/sbin/iw "$@"
+fi
+EOF
+    chmod +x "$BATS_MOCK_BINDIR/iw"
+
     # Mock cukinia_systemd_unit
     cat <<'EOF' >"$BATS_MOCK_BINDIR/systemctl"
 #!/bin/sh

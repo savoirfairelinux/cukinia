@@ -166,6 +166,24 @@ cukinia_netif_is_up eth2
 
 ---
 
+## 🛜 Wireless
+
+- `cukinia_wifi_is_connected <ifname>` → validate that the STA interface is connected to an access point
+- `cukinia_wifi_mode <mode>` → validate the wifi mode
+- `cukinia_wifi_ssid <ifname> <ssid>` → validate that the interface (STA or AP) is using the specified SSID
+- `cukinia_wifi_txpower <ifname> <txpower in dBm>` → validate that the configured TX power is greater than the given threshold
+
+**Examples**
+
+```sh
+cukinia_wifi_is_connected wlan0
+cukinia_wifi_mode wlan0 "managed"
+cukinia_wifi_ssid wlan0 "ssidname"
+cukinia_wifi_txpower wlan0 7
+```
+
+---
+
 ## 🔌 Devices & Buses
 
 - `cukinia_gpio_libgpiod -i <in_pins> -l <out_low> -h <out_high> -g <gpiochip>` → validate GPIO via libgpiod
