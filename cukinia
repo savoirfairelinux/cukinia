@@ -561,8 +561,11 @@ _cukinia_python_pkg()
 	local package="$1"
 
 	for python_interpreter in "python" "python3" "python2"; do
-		python_interpreter="$(which "$python_interpreter")"
-		test -n "$python_interpreter" && break
+		if _require_executable "$python_interpreter"; then
+			_cukinia_prepare "Checking python package \"$python_interpreter"\"
+			break
+		fi
+			python_interpreter=""
 	done
 
 	if [ -z "$python_interpreter" ]; then
@@ -976,10 +979,7 @@ _cukinia_i2c()
 		return 0
 	fi
 
-	if [ ! -x "$(which i2cdetect)" ]; then
-		_cukinia_prepare "cukinia_i2c: i2cdetect is required"
-		return 1
-	fi
+	_require_executable i2cdetect || return 1
 
 	device_address=${device_address#0x}
 	i2cdetect -y "$bus_number" 0x"$device_address" 0x"$device_address" | cut -d ':' -f2 | grep -E "$device_address|UU"
