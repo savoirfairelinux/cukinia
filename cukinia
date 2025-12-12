@@ -33,6 +33,7 @@ GENERIC_FUNCTS='cmd
 		process
 		kthread
 		python_pkg
+		stat
 		symlink
 		sysctl
 		systemd_failed
@@ -1206,6 +1207,78 @@ _cukinia_dns_resolve() {
 	_cukinia_prepare "Checking if hostname \"$hostname\" can ${__not:+NOT }be resolved"
 
 	host "$hostname" >/dev/null && return 0 || return 1
+}
+
+# _cukinia_stat: check file existence, ownership and permissions
+# arg1: path to file
+# arg2: (optional) owner:group (either can be omitted)
+# arg3: (optional) permission mask (e.g., 644, 755)
+_cukinia_stat()
+{
+	local path="$1"
+	local ownership="$2"
+	local perms="$3"
+	local expected_owner
+	local expected_group
+	local actual_owner
+	local actual_group
+	local actual_perms
+
+	if [ -z "$path" ]; then
+		_cukinia_prepare "cukinia_stat: requires at least 1 argument (path)"
+		return 1
+	fi
+
+	# Build description
+	local desc="Checking file \"$path\" does ${__not:+NOT }exist"
+	if [ -n "$ownership" ]; then
+		desc="$desc with ownership \"$ownership\""
+	fi
+	if [ -n "$perms" ]; then
+		desc="$desc and permissions \"$perms\""
+	fi
+	_cukinia_prepare "$desc"
+
+	# Check existence
+	if [ ! -e "$path" ]; then
+		return 1
+	fi
+
+	# Check ownership if specified
+	if [ -n "$ownership" ]; then
+		# Parse owner:group
+		expected_owner="${ownership%%:*}"
+		expected_group="${ownership#*:}"
+
+		# Get actual owner and group
+		actual_owner="$(stat -c '%U' "$path" 2>/dev/null)"
+		actual_group="$(stat -c '%G' "$path" 2>/dev/null)"
+
+		# Check owner if specified (not empty and not just ':')
+		if [ -n "$expected_owner" ] && [ "$expected_owner" != "$ownership" ]; then
+			if [ "$actual_owner" != "$expected_owner" ]; then
+				return 1
+			fi
+		fi
+
+		# Check group if specified (ownership contains ':')
+		if [ "$ownership" != "$expected_owner" ]; then
+			if [ -n "$expected_group" ] && [ "$actual_group" != "$expected_group" ]; then
+				return 1
+			fi
+		fi
+	fi
+
+	# Check permissions if specified
+	if [ -n "$perms" ]; then
+		# Get actual permissions (octal, last 3 digits)
+		actual_perms="$(stat -c '%a' "$path" 2>/dev/null)"
+		if [ "$actual_perms" != "$perms" ]; then
+			return 1
+		fi
+	fi
+
+	return 0
 }
 
 # Print elapsed time since cukinia startup (in seconds)
