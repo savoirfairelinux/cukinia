@@ -108,14 +108,14 @@ EOF
     assert_line --regexp '.*FAIL.*  Should fail and retry 3 times.*'
     assert_line --regexp '.*FAIL.*  Should fail .no retries.*'
 
-    assert_line --regexp '.*FAIL.*  Running "false" is successful.*'
-    assert_line --regexp '.*FAIL.*  Running "true" is NOT successful*'
+    assert_line --regexp '.*FAIL.*  Running "false" does return 0.*'
+    assert_line --regexp '.*FAIL.*  Running "true" does NOT return 0.*'
     assert_line --regexp '.*FAIL.*  Running "test 0 -eq 1" returns success.*'
     assert_line --regexp '.*FAIL.*  Checking process "nosuchprocess" running as any user.*'
     assert_line --regexp '.*FAIL.*  Checking python package "nosuchpackage" is available.*'
     assert_line --regexp '.*FAIL.*  Checking link "/dev/zero" does point to "/dev/null".*'
     assert_line --regexp '.*FAIL.*  Checking if systemd unit "nosuchunit.service" is active.*'
-    assert_line --regexp '.*FAIL.*  SWR_003 -- Running "false" is successful.*'
+    assert_line --regexp '.*FAIL.*  SWR_003 -- Running "false" does return 0.*'
 }
 
 @test "Cukinia Junit XML validation" {

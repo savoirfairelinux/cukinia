@@ -609,7 +609,7 @@ _cukinia_result()
 # arg1..n: arguments
 _cukinia_cmd()
 {
-	_cukinia_prepare "Running \"$*\" is ${__not:+NOT }successful"
+	_cukinia_prepare "Running \"$*\" does ${__not:+NOT }return 0"
 	"$@"
 }
 
