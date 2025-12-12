@@ -116,6 +116,7 @@ generic tests, while `cukinia_cmd` allows for running arbitrary commands.
 - `cukinia_test <test(1) expression>` → validate a generic `test` expression
 - `cukinia_cmd <command...>` → validate that an arbitrary command returns success
 - `cukinia_contains "<list>" <word>[ ...]` → validate that all specified words are contained in a whitespace-separated list
+- `cukinia_matches "<lines>" <pattern>[ ...]` → validate that every line in the input matches at least one grep pattern
 
 **Examples**
 
@@ -134,6 +135,13 @@ as "Root filesystem contains standard directories" \
 
 as "The kernel doesn't show any OOPS or BUG messages" \
   not cukinia_contains "$(dmesg)" OOPS BUG
+
+as "All setuid binaries are known" \
+  cukinia_matches "$(find /usr/bin -perm -4000)" "sudo" "passwd" "pkexec"
+
+running_services="$(systemctl list-units --type=service --state=running --no-legend | awk '{print $1}')"
+as "Only allowed systemd services are running" \
+  cukinia_matches "$running_services" "rsyslog" "systemd-udevd"
 ```
 
 ---

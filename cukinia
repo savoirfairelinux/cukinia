@@ -27,6 +27,7 @@ GENERIC_FUNCTS='cmd
 		knoerror
 		kversion
 		listen4
+		matches
 		mount
 		netif_has_ip
 		netif_is_up
@@ -649,6 +650,42 @@ _cukinia_contains()
 	done
 
 	return 0
+}
+
+# _cukinia_matches: checks that every line in list matches at least one pattern
+# arg1: multi-line list (from command output, etc.)
+# arg2..n: grep patterns to match
+_cukinia_matches()
+{
+	local list="$1"
+	local line
+	local pattern
+	local matched
+
+	# Check for minimum required arguments
+	if [ "$#" -lt 2 ]; then
+		_cukinia_prepare "cukinia_matches: requires at least 2 arguments (list and pattern)"
+		return 1
+	fi
+
+	shift
+
+	_cukinia_prepare "Checking all lines ${__not:+DO NOT }match provided patterns"
+
+	# Check each line matches at least one pattern
+	echo "$list" | while IFS= read -r line; do
+		[ -z "$line" ] && continue
+		matched=0
+		for pattern in "$@"; do
+			if echo "$line" | grep -q "$pattern"; then
+				matched=1
+				break
+			fi
+		done
+		if [ "$matched" -eq 0 ]; then
+			return 1
+		fi
+	done
 }
 
 # _cukinia_test: wrapper to test(1)

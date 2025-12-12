@@ -97,6 +97,7 @@ EOF
     assert_line --regexp '.*PASS.*  Should pass and retry 1 time.*'
 
     assert_line --regexp '.*PASS.*  cukinia_contains: requires at least 2 arguments'
+    assert_line --regexp '.*PASS.*  cukinia_matches: requires at least 2 arguments'
 
     assert_line --regexp '^ran .* tests.*$'
 }
