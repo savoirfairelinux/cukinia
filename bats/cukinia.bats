@@ -96,11 +96,16 @@ EOF
     assert_line --regexp '.*etry.*"Should pass and retry 1 time" in 2s.*'
     assert_line --regexp '.*PASS.*  Should pass and retry 1 time.*'
 
+    assert_line --regexp '.*PASS.*  cukinia_contains: requires at least 2 arguments'
+    assert_line --regexp '.*PASS.*  cukinia_matches: requires at least 2 arguments'
+
     assert_line --regexp '^ran .* tests.*$'
 }
 
 @test "Run cukinia testcases-failure" {
     run sh ./cukinia tests/testcases-failure.conf
+
+    assert_line --regexp '.*FAIL.*  cukinia_contains: requires at least 2 arguments'
 
     assert_line --regexp '.*FAIL.*  Checking if gpiochip0 pins are well configured via libgpiod.*'
     assert_line --regexp '.*FAIL.*  Checking if gpiochip0 pins are well configured via sysfs.*'
@@ -108,14 +113,14 @@ EOF
     assert_line --regexp '.*FAIL.*  Should fail and retry 3 times.*'
     assert_line --regexp '.*FAIL.*  Should fail .no retries.*'
 
-    assert_line --regexp '.*FAIL.*  Running "false" is successful.*'
-    assert_line --regexp '.*FAIL.*  Running "true" is NOT successful*'
-    assert_line --regexp '.*FAIL.*  Running "test 0 -eq 1" returns success.*'
-    assert_line --regexp '.*FAIL.*  Checking process "nosuchprocess" running as any user.*'
+    assert_line --regexp '.*FAIL.*  Running "false" does return 0.*'
+    assert_line --regexp '.*FAIL.*  Running "true" does NOT return 0.*'
+    assert_line --regexp '.*FAIL.*  Running "test 0 -eq 1" does return 0.*'
+    assert_line --regexp '.*FAIL.*  Checking process "nosuchprocess" is running as any user.*'
     assert_line --regexp '.*FAIL.*  Checking python package "nosuchpackage" is available.*'
     assert_line --regexp '.*FAIL.*  Checking link "/dev/zero" does point to "/dev/null".*'
     assert_line --regexp '.*FAIL.*  Checking if systemd unit "nosuchunit.service" is active.*'
-    assert_line --regexp '.*FAIL.*  SWR_003 -- Running "false" is successful.*'
+    assert_line --regexp '.*FAIL.*  SWR_003 -- Running "false" does return 0.*'
 }
 
 @test "Cukinia Junit XML validation" {

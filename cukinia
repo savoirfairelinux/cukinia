@@ -15,7 +15,9 @@ DEFAULT_CONFIG_FILE='/etc/cukinia/cukinia.conf'
 # Generic user functions templated to _cukinia_xxx()
 GENERIC_FUNCTS='cmd
 		cmdline
+		contains
 		dns_resolve
+		file
 		gpio_libgpiod
 		gpio_sysfs
 		group
@@ -26,6 +28,7 @@ GENERIC_FUNCTS='cmd
 		knoerror
 		kversion
 		listen4
+		matches
 		mount
 		netif_has_ip
 		netif_is_up
@@ -609,7 +612,7 @@ _cukinia_result()
 # arg1..n: arguments
 _cukinia_cmd()
 {
-	_cukinia_prepare "Running \"$*\" is ${__not:+NOT }successful"
+	_cukinia_prepare "Running \"$*\" does ${__not:+NOT }return 0"
 	"$@"
 }
 
@@ -623,18 +626,82 @@ _cukinia_cmdline()
 	grep -Eq "(^|\ )$match_regex(\ |$)" /proc/cmdline
 }
 
+# _cukinia_contains: checks if words are contained in a whitespace-separated list
+# arg1: whitespace-separated list
+# arg2..n: words to check
+_cukinia_contains()
+{
+	local list="$1"
+	local word
+
+	# Check for minimum required arguments
+	if [ "$#" -lt 2 ]; then
+		_cukinia_prepare "cukinia_contains: requires at least 2 arguments (list and word)"
+		return 1
+	fi
+
+	shift
+
+	_cukinia_prepare "Checking list does ${__not:+NOT }contain \"$*\""
+
+	# Check if all words are in the list
+	for word in "$@"; do
+		if ! echo "$list" | grep -qw "$word"; then
+			return 1
+		fi
+	done
+
+	return 0
+}
+
+# _cukinia_matches: checks that every line in list matches at least one pattern
+# arg1: multi-line list (from command output, etc.)
+# arg2..n: grep patterns to match
+_cukinia_matches()
+{
+	local list="$1"
+	local line
+	local pattern
+	local matched
+
+	# Check for minimum required arguments
+	if [ "$#" -lt 2 ]; then
+		_cukinia_prepare "cukinia_matches: requires at least 2 arguments (list and pattern)"
+		return 1
+	fi
+
+	shift
+
+	_cukinia_prepare "Checking all lines ${__not:+DO NOT }match provided patterns"
+
+	# Check each line matches at least one pattern
+	echo "$list" | while IFS= read -r line; do
+		[ -z "$line" ] && continue
+		matched=0
+		for pattern in "$@"; do
+			if echo "$line" | grep -q "$pattern"; then
+				matched=1
+				break
+			fi
+		done
+		if [ "$matched" -eq 0 ]; then
+			return 1
+		fi
+	done
+}
+
 # _cukinia_test: wrapper to test(1)
 # arg1..n: arguments to test(1)
 _cukinia_test()
 {
-	local desc="Running \"test $*\" ${__not:+NOT }returns success"
+	local desc="Running \"test $*\" does ${__not:+NOT }return 0"
 
 	case "$1" in
-	-f) desc="Checking file \"$2\" ${__not:+NOT }exists" ;;
+	-f) desc="Checking file \"$2\" does ${__not:+NOT }exist" ;;
 	-s) desc="Checking file \"$2\" is ${__not:+NOT }non-empty" ;;
-	-d) desc="Checking directory \"$2\" ${__not:+NOT }exists" ;;
-	-b) desc="Checking \"$2\" ${__not:+NOT }exists and is block special" ;;
-	-c) desc="Checking \"$2\" ${__not:+NOT }exists and is character special" ;;
+	-d) desc="Checking directory \"$2\" does ${__not:+NOT }exist" ;;
+	-b) desc="Checking \"$2\" does ${__not:+NOT }exist and is block special" ;;
+	-c) desc="Checking \"$2\" does ${__not:+NOT }exist and is character special" ;;
 	-L|-h) desc="Checking \"$2\" is ${__not:+NOT }a symlink" ;;
 	esac
 
@@ -647,7 +714,7 @@ _cukinia_user()
 {
 	local user="$1"
 
-	_cukinia_prepare "Checking user \"$user\" ${__not:+NOT }exists"
+	_cukinia_prepare "Checking user \"$user\" does ${__not:+NOT }exist"
 	grep -q "^$user:" /etc/passwd
 }
 
@@ -677,7 +744,7 @@ _cukinia_group()
 {
 	local group="$1"
 
-	_cukinia_prepare "Checking group \"$group\" ${__not:+NOT }exists"
+	_cukinia_prepare "Checking group \"$group\" does ${__not:+NOT }exist"
 	grep -q "^$group:" /etc/group
 }
 
@@ -706,7 +773,7 @@ _cukinia_kconf()
 		return 1
 	fi
 
-	_cukinia_prepare "Checking kernel config \"$kconf\" ${__not:+NOT }set to \"$kset\""
+	_cukinia_prepare "Checking kernel config \"$kconf\" is ${__not:+NOT }set to \"$kset\""
 
 	case "$kset" in
 	y|m) line="CONFIG_$kconf=$kset" ;;
@@ -742,7 +809,7 @@ _cukinia_process_with_args()
 	local pname="$1"
 	local puser="$2"
 
-	_cukinia_prepare "Checking process \"$pname\" ${__not:+NOT }running as ${puser:-any user}"
+	_cukinia_prepare "Checking process \"$pname\" is ${__not:+NOT }running as ${puser:-any user}"
 
 	check_process "$pname" "1" "$puser"
 
@@ -758,7 +825,7 @@ _cukinia_process()
 	local pname="$1"
 	local puser="$2"
 
-	_cukinia_prepare "Checking process \"$pname\" ${__not:+NOT }running as ${puser:-any user}"
+	_cukinia_prepare "Checking process \"$pname\" is ${__not:+NOT }running as ${puser:-any user}"
 
 	check_process "$pname" "0" "$puser"
 
@@ -904,7 +971,7 @@ _cukinia_mount()
 		shift 2
 	fi
 
-	_cukinia_prepare "Checking $device on $mountpoint type ${fstype:-any} (${options:-any}) ${__not:+NOT} mounted"
+	_cukinia_prepare "Checking $device on $mountpoint type ${fstype:-any} (${options:-any}) is ${__not:+NOT }mounted"
 
 	# use fstype as an awk regex if present
 	if [ "$fstype" = "any" ] || [ -z "$fstype" ]; then
@@ -1206,6 +1273,78 @@ _cukinia_dns_resolve() {
 	_cukinia_prepare "Checking if hostname \"$hostname\" can ${__not:+NOT }be resolved"
 
 	host "$hostname" >/dev/null && return 0 || return 1
+}
+
+# _cukinia_file: check file existence, ownership and permissions
+# arg1: path to file
+# arg2: (optional) owner:group (either can be omitted)
+# arg3: (optional) permission mask (e.g., 644, 755)
+_cukinia_file()
+{
+	local path="$1"
+	local ownership="$2"
+	local perms="$3"
+	local expected_owner
+	local expected_group
+	local actual_owner
+	local actual_group
+	local actual_perms
+
+	if [ -z "$path" ]; then
+		_cukinia_prepare "cukinia_file: requires at least 1 argument (path)"
+		return 1
+	fi
+
+	# Build description
+	local desc="Checking file \"$path\" does ${__not:+NOT }exist"
+	if [ -n "$ownership" ]; then
+		desc="$desc with ownership \"$ownership\""
+	fi
+	if [ -n "$perms" ]; then
+		desc="$desc and permissions \"$perms\""
+	fi
+	_cukinia_prepare "$desc"
+
+	# Check existence
+	if [ ! -e "$path" ]; then
+		return 1
+	fi
+
+	# Check ownership if specified
+	if [ -n "$ownership" ]; then
+		# Parse owner:group
+		expected_owner="${ownership%%:*}"
+		expected_group="${ownership#*:}"
+
+		# Get actual owner and group
+		actual_owner="$(stat -c '%U' "$path" 2>/dev/null)"
+		actual_group="$(stat -c '%G' "$path" 2>/dev/null)"
+
+		# Check owner if specified (not empty and not just ':')
+		if [ -n "$expected_owner" ] && [ "$expected_owner" != "$ownership" ]; then
+			if [ "$actual_owner" != "$expected_owner" ]; then
+				return 1
+			fi
+		fi
+
+		# Check group if specified (ownership contains ':')
+		if [ "$ownership" != "$expected_owner" ]; then
+			if [ -n "$expected_group" ] && [ "$actual_group" != "$expected_group" ]; then
+				return 1
+			fi
+		fi
+	fi
+
+	# Check permissions if specified
+	if [ -n "$perms" ]; then
+		# Get actual permissions (octal, last 3 digits)
+		actual_perms="$(stat -c '%a' "$path" 2>/dev/null)"
+		if [ "$actual_perms" != "$perms" ]; then
+			return 1
+		fi
+	fi
+
+	return 0
 }
 
 # Print elapsed time since cukinia startup (in seconds)
