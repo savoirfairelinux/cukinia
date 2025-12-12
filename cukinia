@@ -627,14 +627,14 @@ _cukinia_cmdline()
 # arg1..n: arguments to test(1)
 _cukinia_test()
 {
-	local desc="Running \"test $*\" ${__not:+NOT }returns success"
+	local desc="Running \"test $*\" does ${__not:+NOT }return 0"
 
 	case "$1" in
-	-f) desc="Checking file \"$2\" ${__not:+NOT }exists" ;;
+	-f) desc="Checking file \"$2\" does ${__not:+NOT }exist" ;;
 	-s) desc="Checking file \"$2\" is ${__not:+NOT }non-empty" ;;
-	-d) desc="Checking directory \"$2\" ${__not:+NOT }exists" ;;
-	-b) desc="Checking \"$2\" ${__not:+NOT }exists and is block special" ;;
-	-c) desc="Checking \"$2\" ${__not:+NOT }exists and is character special" ;;
+	-d) desc="Checking directory \"$2\" does ${__not:+NOT }exist" ;;
+	-b) desc="Checking \"$2\" does ${__not:+NOT }exist and is block special" ;;
+	-c) desc="Checking \"$2\" does ${__not:+NOT }exist and is character special" ;;
 	-L|-h) desc="Checking \"$2\" is ${__not:+NOT }a symlink" ;;
 	esac
 
@@ -647,7 +647,7 @@ _cukinia_user()
 {
 	local user="$1"
 
-	_cukinia_prepare "Checking user \"$user\" ${__not:+NOT }exists"
+	_cukinia_prepare "Checking user \"$user\" does ${__not:+NOT }exist"
 	grep -q "^$user:" /etc/passwd
 }
 
@@ -677,7 +677,7 @@ _cukinia_group()
 {
 	local group="$1"
 
-	_cukinia_prepare "Checking group \"$group\" ${__not:+NOT }exists"
+	_cukinia_prepare "Checking group \"$group\" does ${__not:+NOT }exist"
 	grep -q "^$group:" /etc/group
 }
 
@@ -706,7 +706,7 @@ _cukinia_kconf()
 		return 1
 	fi
 
-	_cukinia_prepare "Checking kernel config \"$kconf\" ${__not:+NOT }set to \"$kset\""
+	_cukinia_prepare "Checking kernel config \"$kconf\" is ${__not:+NOT }set to \"$kset\""
 
 	case "$kset" in
 	y|m) line="CONFIG_$kconf=$kset" ;;
@@ -742,7 +742,7 @@ _cukinia_process_with_args()
 	local pname="$1"
 	local puser="$2"
 
-	_cukinia_prepare "Checking process \"$pname\" ${__not:+NOT }running as ${puser:-any user}"
+	_cukinia_prepare "Checking process \"$pname\" is ${__not:+NOT }running as ${puser:-any user}"
 
 	check_process "$pname" "1" "$puser"
 
@@ -758,7 +758,7 @@ _cukinia_process()
 	local pname="$1"
 	local puser="$2"
 
-	_cukinia_prepare "Checking process \"$pname\" ${__not:+NOT }running as ${puser:-any user}"
+	_cukinia_prepare "Checking process \"$pname\" is ${__not:+NOT }running as ${puser:-any user}"
 
 	check_process "$pname" "0" "$puser"
 
@@ -904,7 +904,7 @@ _cukinia_mount()
 		shift 2
 	fi
 
-	_cukinia_prepare "Checking $device on $mountpoint type ${fstype:-any} (${options:-any}) ${__not:+NOT} mounted"
+	_cukinia_prepare "Checking $device on $mountpoint type ${fstype:-any} (${options:-any}) is ${__not:+NOT }mounted"
 
 	# use fstype as an awk regex if present
 	if [ "$fstype" = "any" ] || [ -z "$fstype" ]; then

@@ -110,8 +110,8 @@ EOF
 
     assert_line --regexp '.*FAIL.*  Running "false" does return 0.*'
     assert_line --regexp '.*FAIL.*  Running "true" does NOT return 0.*'
-    assert_line --regexp '.*FAIL.*  Running "test 0 -eq 1" returns success.*'
-    assert_line --regexp '.*FAIL.*  Checking process "nosuchprocess" running as any user.*'
+    assert_line --regexp '.*FAIL.*  Running "test 0 -eq 1" does return 0.*'
+    assert_line --regexp '.*FAIL.*  Checking process "nosuchprocess" is running as any user.*'
     assert_line --regexp '.*FAIL.*  Checking python package "nosuchpackage" is available.*'
     assert_line --regexp '.*FAIL.*  Checking link "/dev/zero" does point to "/dev/null".*'
     assert_line --regexp '.*FAIL.*  Checking if systemd unit "nosuchunit.service" is active.*'
