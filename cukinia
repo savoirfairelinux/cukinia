@@ -15,6 +15,7 @@ DEFAULT_CONFIG_FILE='/etc/cukinia/cukinia.conf'
 # Generic user functions templated to _cukinia_xxx()
 GENERIC_FUNCTS='cmd
 		cmdline
+		contains
 		dns_resolve
 		gpio_libgpiod
 		gpio_sysfs
@@ -620,6 +621,34 @@ _cukinia_cmdline()
 
 	_cukinia_prepare "Checking kernel cmdline has ${__not:+NOT }\"$match_regex\""
 	grep -Eq "(^|\ )$match_regex(\ |$)" /proc/cmdline
+}
+
+# _cukinia_contains: checks if words are contained in a whitespace-separated list
+# arg1: whitespace-separated list
+# arg2..n: words to check
+_cukinia_contains()
+{
+	local list="$1"
+	local word
+
+	# Check for minimum required arguments
+	if [ "$#" -lt 2 ]; then
+		_cukinia_prepare "cukinia_contains: requires at least 2 arguments (list and word)"
+		return 1
+	fi
+
+	shift
+
+	_cukinia_prepare "Checking list does ${__not:+NOT }contain \"$*\""
+
+	# Check if all words are in the list
+	for word in "$@"; do
+		if ! echo "$list" | grep -qw "$word"; then
+			return 1
+		fi
+	done
+
+	return 0
 }
 
 # _cukinia_test: wrapper to test(1)

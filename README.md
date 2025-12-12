@@ -115,6 +115,7 @@ generic tests, while `cukinia_cmd` allows for running arbitrary commands.
 
 - `cukinia_test <test(1) expression>` → validate a generic `test` expression
 - `cukinia_cmd <command...>` → validate that an arbitrary command returns success
+- `cukinia_contains "<list>" <word>[ ...]` → validate that all specified words are contained in a whitespace-separated list
 
 **Examples**
 
@@ -127,6 +128,12 @@ as "The remote sensor was detected" \
 
 as "The root user's password field is not empty" \
     not cukinia_cmd "grep -q ^root:: /etc/passwd"
+
+as "Root filesystem contains standard directories" \
+  cukinia_contains "$(ls /)" usr var etc
+
+as "The kernel doesn't show any OOPS or BUG messages" \
+  not cukinia_contains "$(dmesg)" OOPS BUG
 ```
 
 ---

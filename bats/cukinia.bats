@@ -96,11 +96,15 @@ EOF
     assert_line --regexp '.*etry.*"Should pass and retry 1 time" in 2s.*'
     assert_line --regexp '.*PASS.*  Should pass and retry 1 time.*'
 
+    assert_line --regexp '.*PASS.*  cukinia_contains: requires at least 2 arguments'
+
     assert_line --regexp '^ran .* tests.*$'
 }
 
 @test "Run cukinia testcases-failure" {
     run sh ./cukinia tests/testcases-failure.conf
+
+    assert_line --regexp '.*FAIL.*  cukinia_contains: requires at least 2 arguments'
 
     assert_line --regexp '.*FAIL.*  Checking if gpiochip0 pins are well configured via libgpiod.*'
     assert_line --regexp '.*FAIL.*  Checking if gpiochip0 pins are well configured via sysfs.*'
