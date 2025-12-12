@@ -148,11 +148,17 @@ as "Only allowed systemd services are running" \
 
 ## 💾 Filesystems & Paths
 
+- `cukinia_file <path> [owner:group] [permissions]` → validate file existence, ownership, and permissions. Also works for directories.
 - `cukinia_mount <device> <target> [fstype] [options]` → validate the presence of a mount
 - `cukinia_symlink <path> <expected_target>` → validate the target of a symlink
 
 **Examples**
 ```sh
+cukinia_file /etc/passwd
+cukinia_file /etc/shadow root:
+cukinia_file /etc/shadow root:shadow 640
+cukinia_file /tmp "" 1777
+
 cukinia_mount sysfs /sys
 cukinia_mount /dev/sda5 /mnt/maps ext4 ro
 cukinia_symlink /etc/alternatives/editor /usr/bin/vim
