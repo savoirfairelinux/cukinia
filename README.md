@@ -93,6 +93,7 @@ cukinia_process_with_args "gpsd --nodaemon" appuser
 - `cukinia_kconf <symbol> <y|m|n>` → validate that a kernel config symbol has a given tristate value
 - `cukinia_kmod <module>` → validate that a kernel module is loaded
 - `cukinia_knoerror <priority>` → validate that kernel boot has no important errors at or above the given log priority
+  - **Note:** This test prefers `dmesg --level` for precise filtering (not available in BusyBox by default). When `--level` is unavailable, it falls back to grepping for common error patterns. For BusyBox systems, you can either enable `CONFIG_FEATURE_DMESG_LEVEL` in your BusyBox configuration, or use `cukinia_cmd` with custom grep patterns for more control.
 - `cukinia_kversion <maj.min>` → validate kernel version (checks major.minor, e.g. 5.14)
 - `cukinia_sysctl <key> <value>` → validate that a kernel sysctl parameter is set to value
 
@@ -102,6 +103,7 @@ cukinia_process_with_args "gpsd --nodaemon" appuser
 cukinia_cmdline console=ttyS0
 cukinia_kconf CONFIG_IPV6 y
 cukinia_kmod i2c_dev
+cukinia_knoerror 2
 cukinia_kversion 6.6
 cukinia_sysctl net.ipv4.ip_forward 0
 ```
