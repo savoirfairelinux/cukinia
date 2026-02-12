@@ -116,7 +116,19 @@ generic tests, while `cukinia_cmd` allows for running arbitrary commands.
 - `cukinia_test <test(1) expression>` → validate a generic `test` expression
 - `cukinia_cmd <command...>` → validate that an arbitrary command returns success
 
-**Examples**
+**Output validation commands**
+
+These commands test the output from the previous `cukinia_cmd` execution:
+
+- `cukinia_matching <pattern>[ ...]` → validates that every line of output matches at least one grep pattern
+- `cukinia_containing <pattern>[ ...]` → validates that output contains at least one line matching for grep pattern
+
+As well as their extended regex variants (more performant, but less portable):
+
+- `cukinia_econtaining <egrep_pattern>` → validates that output lines contains at least one match of an extended grep pattern
+- `cukinia_ematching <egrep_pattern>` → validates that every line of output matches an extended grep pattern
+
+**Examples
 
 ```sh
 cukinia_test -f /etc/os-release
@@ -127,6 +139,22 @@ as "The remote sensor was detected" \
 
 as "The root user's password field is not empty" \
     not cukinia_cmd "grep -q ^root:: /etc/passwd"
+
+cukinia_cmd ls /
+as "Root filesystem has standard directories" \
+  cukinia_containing "bin" "usr" "var" "etc"
+
+cukinia_cmd find /usr/bin -perm -4000
+as "All setuid binaries are known" \
+  cukinia_matching "sudo" "passwd" "pkexec"
+
+cukinia_cmd sh -c 'systemctl list-units --type=service --state=running --no-legend | awk "{print \$1}"'
+as "Only allowed systemd services are running" \
+  cukinia_ematching "^(rsyslog|systemd-|dbus)$"
+
+cukinia_cmd dmesg
+as "No errors in kernel logs" \
+  not cukinia_econtaining "([Ee]rror|[Ww]arning)"
 ```
 
 ---

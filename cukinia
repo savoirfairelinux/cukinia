@@ -15,7 +15,10 @@ DEFAULT_CONFIG_FILE='/etc/cukinia/cukinia.conf'
 # Generic user functions templated to _cukinia_xxx()
 GENERIC_FUNCTS='cmd
 		cmdline
+		containing
 		dns_resolve
+		econtaining
+		ematching
 		gpio_libgpiod
 		gpio_sysfs
 		group
@@ -26,6 +29,7 @@ GENERIC_FUNCTS='cmd
 		knoerror
 		kversion
 		listen4
+		matching
 		mount
 		netif_has_ip
 		netif_is_up
@@ -611,7 +615,103 @@ _cukinia_result()
 _cukinia_cmd()
 {
 	_cukinia_prepare "Running \"$*\" does ${__not:+NOT }return 0"
-	"$@"
+	
+	# Capture output for potential post-processing by matching/containing commands
+	__last_cmd_output="$("$@" 2>&1)"
+	local ret=$?
+	
+	return $ret
+}
+
+# _cukinia_matching: validate that every line of previous command output matches at least one pattern
+# arg1..n: grep patterns to match
+_cukinia_matching()
+{
+	local patterns="$*"
+	local line
+	local pattern
+	local matched
+
+	_cukinia_prepare "Checking every line matches ${__not:+NONE OF }patterns: $patterns"
+
+	if [ -z "$__last_cmd_output" ]; then
+		_cukinia_prepare "cukinia_matching: no previous command output available"
+		return 1
+	fi
+
+	echo "$__last_cmd_output" | while IFS= read -r line; do
+		[ -z "$line" ] && continue # Ignore empty lines
+		matched=0
+		for pattern in $patterns; do
+			if echo "$line" | grep -q "$pattern"; then
+				matched=1
+				break
+			fi
+		done
+		if [ "$matched" -eq 0 ]; then
+			return 1
+		fi
+	done
+}
+
+# _cukinia_containing: validate that previous cukinia_cmd output contains all specified patterns
+# arg1..n: patterns that must be present
+_cukinia_containing()
+{
+	local patterns="$*"
+	local pattern
+	_cukinia_prepare "Checking output contains ${__not:+NONE OF }patterns: $patterns"
+
+	if [ -z "$__last_cmd_output" ]; then
+		_cukinia_prepare "cukinia_containing: no previous command output available"
+		return 1
+	fi
+
+	for pattern in $patterns; do
+		if ! echo "$__last_cmd_output" | grep -qw "$pattern"; then
+			return 1
+		fi
+	done
+
+	return 0
+}
+
+# _cukinia_ematching: validate that every line of previous cukinia_cmd output matches extended grep pattern
+# arg1: extended grep pattern (e.g., "word1|word2|word3")
+_cukinia_ematching()
+{
+	local pattern="$1"
+	local line
+
+	_cukinia_prepare "Checking every line matches ${__not:+NOT }pattern: $pattern"
+
+	if [ -z "$__last_cmd_output" ]; then
+		_cukinia_prepare "cukinia_ematching: no previous command output available"
+		return 1
+	fi
+
+	echo "$__last_cmd_output" | while IFS= read -r line; do
+		[ -z "$line" ] && continue # Ignore empty lines
+		if ! echo "$line" | grep -Eq "$pattern"; then
+			return 1
+		fi
+	done
+}
+
+# _cukinia_econtaining: validate that previous cukinia_cmd output contains extended grep pattern
+# arg1: extended grep pattern (e.g., "word1|word2|word3")
+_cukinia_econtaining()
+{
+	local pattern="$1"
+
+	_cukinia_prepare "Checking output contains ${__not:+NOT }pattern: $pattern"
+
+	if [ -z "$__last_cmd_output" ]; then
+		_cukinia_prepare "cukinia_econtaining: no previous command output available"
+		return 1
+	fi
+
+	echo "$__last_cmd_output" | grep -Eq "$pattern"
 }
 
 # _cukinia_cmdline: checks if kernel cmdline contains param $1

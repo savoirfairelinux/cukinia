@@ -102,6 +102,8 @@ EOF
 @test "Run cukinia testcases-failure" {
     run sh ./cukinia tests/testcases-failure.conf
 
+    assert_line --regexp '.*FAIL.*  cukinia_matching: no previous command output available'
+
     assert_line --regexp '.*FAIL.*  Checking if gpiochip0 pins are well configured via libgpiod.*'
     assert_line --regexp '.*FAIL.*  Checking if gpiochip0 pins are well configured via sysfs.*'
 
