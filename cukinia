@@ -39,7 +39,11 @@ GENERIC_FUNCTS='cmd
 		systemd_unit
 		test
 		user
-		user_memberof'
+		user_memberof
+		wifi_is_connected
+		wifi_mode
+		wifi_ssid
+		wifi_txpower'
 
 # By default log to stdout
 __log_file="/dev/stdout"
@@ -558,8 +562,11 @@ _cukinia_python_pkg()
 	local package="$1"
 
 	for python_interpreter in "python" "python3" "python2"; do
-		python_interpreter="$(which "$python_interpreter")"
-		test -n "$python_interpreter" && break
+		if _require_executable "$python_interpreter"; then
+			_cukinia_prepare "Checking python package \"$python_interpreter"\"
+			break
+		fi
+			python_interpreter=""
 	done
 
 	if [ -z "$python_interpreter" ]; then
@@ -603,6 +610,27 @@ _cukinia_result()
 	fi
 
 	cukinia_log "[$result] "${__test_id:+ ${__test_id} --}" ${__cukinia_cur_test}${suffix}"
+}
+
+# _require_executable: check if an executable is present
+# arg1: executable name
+_require_executable() {
+    local exe="$1"
+
+    if [ -z "$exe" ]; then
+        _cukinia_prepare "require_executable: missing executable name"
+        return 1
+    fi
+
+    local exe_path
+    exe_path=$(which "$exe" 2>/dev/null)
+
+    if [ ! -x "$exe_path" ]; then
+        _cukinia_prepare "require_executable: $exe"
+        return 1
+    fi
+
+    return 0
 }
 
 # _cukinia_cmd: wrapper to any command
@@ -952,10 +980,7 @@ _cukinia_i2c()
 		return 0
 	fi
 
-	if [ ! -x "$(which i2cdetect)" ]; then
-		_cukinia_prepare "cukinia_i2c: i2cdetect is required"
-		return 1
-	fi
+	_require_executable i2cdetect || return 1
 
 	device_address=${device_address#0x}
 	i2cdetect -y "$bus_number" 0x"$device_address" 0x"$device_address" | cut -d ':' -f2 | grep -E "$device_address|UU"
@@ -1214,6 +1239,100 @@ _time_elapsed()
 	local now=$(date +%s)
 
 	echo $((now - cukinia_epoch))
+}
+
+# _cukinia_wifi_is_connected: Check if the STA is currently connected to an access point.
+# arg1: interface name
+_cukinia_wifi_is_connected() {
+	local interface="$1"
+
+	# Check if interface is missing
+	if [ -z "$interface" ]; then
+		return 1
+	fi
+
+	_cukinia_prepare "Checking interface \"$interface\" STA is ${__not:+NOT }connected to an AP"
+
+	# Check for iw tool presence
+	_require_executable iw || return 1
+
+	iw dev "$interface" link | grep -q "^Connected to"
+}
+
+# _cukinia_wifi_is_mode:
+# Check if the given Wi-Fi interface (STA or AP) is operating in the expected mode.
+# This works for any interface type:
+#   - managed  (station/STA mode)
+#   - AP       (access point mode)
+#
+# arg1: interface name
+# arg2: expected mode
+_cukinia_wifi_mode() {
+	local interface="$1"
+	local expected_mode="$2"
+
+	# Check if interface or expected_mode is missing
+	if [ -z "$interface" ] || [ -z "$expected_mode" ]; then
+		return 1
+	fi
+
+	_cukinia_prepare "Checking \"$interface\" is ${__not:+NOT }in \"$expected_mode\" mode"
+
+	# Check for iw tool presence
+	_require_executable iw || return 1
+
+	local mode
+	mode=$(iw dev "$interface" info | awk '/type/ {print $2}')
+	[ "$mode" = "$expected_mode" ]
+}
+
+# _cukinia_wifi_ssid: Verify that the interface (STA or AP) is using the specified SSID.
+# arg1: interface name
+# arg2: expected SSID name
+_cukinia_wifi_ssid() {
+    local interface="$1"
+    local expected_ssid="$2"
+
+	# Check if interface or expected_ssid is missing
+	if [ -z "$interface" ] || [ -z "$expected_ssid" ]; then
+		return 1
+	fi
+
+    _cukinia_prepare "Checking \"$interface\" is ${__not:+NOT }using SSID \"$expected_ssid\""
+
+	# Check for iw tool presence
+	_require_executable iw || return 1
+
+    local ssid
+    ssid=$(iw dev "$interface" info 2>/dev/null | awk '/ssid/ {print $2}')
+
+    [ "$ssid" = "$expected_ssid" ]
+}
+
+# _cukinia_wifi_txpower: Check if the TX power is above a specified threshold.
+# arg1: interface name
+# arg2: TX power threshold in dBm
+_cukinia_wifi_txpower() {
+	local interface="$1"
+	local threshold="$2"
+
+	# Check if interface or threshold is missing
+	if [ -z "$interface" ] || [ -z "$threshold" ]; then
+		return 1
+	fi
+
+	_cukinia_prepare "Checking the TX power for \"$interface\" is ${__not:+NOT }above ${threshold} dBm"
+
+	# Check for iw tool presence
+	_require_executable iw || return 1
+
+	local txpower
+	# Extract numeric value only, remove whitespace
+	txpower=$(iw dev "$interface" info | awk '/txpower/ {gsub(/[^0-9.]/,"",$2); print $2}' | xargs)
+	[ -z "$txpower" ] && return 1
+
+	# Compare numeric values (works with float)
+	awk -v p="$txpower" -v th="$threshold" 'BEGIN {exit !(p > th)}'
 }
 
 # Create junit-xml header
