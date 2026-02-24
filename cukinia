@@ -691,15 +691,15 @@ _cukinia_kmod()
 }
 
 # _cukinia_kconf: checks if kernel config option $1 is set as $2
-# arg: $1: kernel configuration symbol name (without the CONFIG_ prefix)
+# arg: $1: kernel config  symbol name (with or without CONFIG_ prefix)
 # arg: $2: the desired setting for $1 option (y, m, n)
 _cukinia_kconf()
 {
 	local ikconfig="/proc/config.gz"
 	local bootconfig="/boot/config-$(uname -r)"
-	local kconf="$1"
+	local kconf="CONFIG_${1#CONFIG_}"
 	local kset="$2"
-	local line=""
+	local line
 
 	if [ ! -e "$ikconfig" ] && [ ! -e "$bootconfig" ]; then
 		_cukinia_prepare "cukinia_kconf: $ikconfig (CONFIG_IKCONFIG_PROC=y) or $bootconfig is ${__not:+NOT }required"
@@ -709,18 +709,18 @@ _cukinia_kconf()
 	_cukinia_prepare "Checking kernel config \"$kconf\" ${__not:+NOT }set to \"$kset\""
 
 	case "$kset" in
-	y|m) line="CONFIG_$kconf=$kset" ;;
-	n) line="# CONFIG_$kconf is not set" ;;
+	y|m) line="$kconf=$kset" ;;
+	n) line="# $kconf is not set" ;;
 	*)
 		_cukinia_prepare "cukinia_kconf: invalid 2nd argument (use y|m|n)"
 		return 1
 		;;
 	esac
 
-	if [ ! -e "$ikconfig" ]; then
-		cat $bootconfig | grep -q "^$line"
+	if [ -e "$ikconfig" ]; then
+		zcat "$ikconfig" | grep -q "^$line"
 	else
-		zcat /proc/config.gz | grep -q "^$line"
+		grep -q "^$line" $bootconfig
 	fi
 }
 
