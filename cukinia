@@ -568,7 +568,13 @@ _cukinia_python_pkg()
 	fi
 
 	_cukinia_prepare "Checking python package \"$package\" is ${__not:+NOT }available"
-	"$python_interpreter" -c "import sys, pkgutil; sys.exit(0 if pkgutil.find_loader('$package') else 1)"
+
+	local check_module="import sys, pkgutil; sys.exit(0 if pkgutil.find_loader('$package') else 1)"
+	if [ ! $("$python_interpreter" -c 'exec("try:from pkgutil import find_loader\nexcept:exit(1)")') ]; then
+		check_module="import sys, importlib; sys.exit(0 if importlib.util.find_spec('$package') else 1)"
+	fi
+
+	"$python_interpreter" -c "$check_module"
 }
 
 # _cukinia_prepare: Prepare test for result
