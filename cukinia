@@ -974,7 +974,7 @@ _cukinia_i2c()
 		return 0
 	fi
 
-	local device_path=$bus_number-$(printf '%0'4'd' $device_address)
+	local device_path=$bus_number-$(printf '%0'4'x' 0x$device_address)
 	local link=/sys/bus/i2c/devices/$device_path/driver
 	local target=/sys/bus/i2c/drivers/$driver_name
 
