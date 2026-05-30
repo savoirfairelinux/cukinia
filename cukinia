@@ -950,7 +950,7 @@ _cukinia_i2c()
 
 	_cukinia_prepare "Checking if i2c-$bus_number${device_address:+-$device_address} exists${driver_name:+ and is $driver_name}"
 
-	if [ ! -d /sys/bus/i2c/devices/i2c-"$bus_number" ]; then
+	if [ ! test -d /sys/bus/i2c/devices/i2c-"$bus_number" ]; then
 		return 1
 	fi
 
@@ -979,7 +979,9 @@ _cukinia_i2c()
 	local target=/sys/bus/i2c/drivers/$driver_name
 
 	# fail on non-symlinks
-	[ -L "$link" ] || return 1
+	if [ ! test -L "$link" ]; then
+		return 1
+	fi
 
 	[ "$(readlink -f "$link")" = "$(readlink -f "$target")" ] && return 0 || return 1
 }

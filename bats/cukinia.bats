@@ -10,17 +10,6 @@ setup() {
     mkdir -p "$BATS_MOCK_BINDIR"
     export PATH="$BATS_MOCK_BINDIR:$PATH"
 
-    # Mock cukinia_cmdline
-    cat <<'EOF' >"$BATS_MOCK_BINDIR/grep"
-#!/bin/bash
-if [[ "$1 $2" =~ (^|\ )quiet(\ |$) ]]; then
-    exit 0
-else
-    /bin/grep "$@"
-fi
-EOF
-    chmod +x "$BATS_MOCK_BINDIR/grep"
-
     # Mock cukinia_http_request
     cat <<'EOF' >"$BATS_MOCK_BINDIR/wget"
 #!/bin/sh
@@ -31,17 +20,6 @@ else
 fi
 EOF
     chmod +x "$BATS_MOCK_BINDIR/wget"
-
-    # Mock cukinia_kmod
-    cat <<'EOF' >"$BATS_MOCK_BINDIR/grep"
-#!/bin/bash
-if [[ "$1 $2" =~ ^inet_diag\ /proc/modules ]]; then
-    exit 0
-else
-    /bin/grep "$@"
-fi
-EOF
-    chmod +x "$BATS_MOCK_BINDIR/grep"
 
     # Mock cukinia_listen4
     cat <<'EOF' >"$BATS_MOCK_BINDIR/netstat"
@@ -79,6 +57,66 @@ else
 fi
 EOF
     chmod +x "$BATS_MOCK_BINDIR/systemctl"
+
+    # Mock cukinia_i2c
+
+    export fakedriver="fakedriver"
+    export fakebus="9"
+    export fakedevices="37 3f"
+
+    cat <<'EOF' >"$BATS_MOCK_BINDIR/i2cdetect"
+#!/bin/sh
+if [[ "$1 $2 $3 $4" =~ \-y\ 9\ 0x3(7|f)\ 0x3(7|f) ]]; then
+    exit 0
+elif [[ "$1 $2 $3 $4" == "-y 9 0x25 0x25" ]]; then
+    exit 1
+else
+    /usr/bin/i2cdetect "$@"
+fi
+EOF
+    chmod +x "$BATS_MOCK_BINDIR/i2cdetect"
+
+    cat <<EOF >"$BATS_MOCK_BINDIR/test"
+#!/bin/sh
+if [[ "\$1 \$2" =~ ^\-d\ /sys/bus/i2c/devices/i2c\-$fakebus\$ ]]; then
+    exit 0
+elif [[ "\$1 \$2" =~ ^\-L\ /sys/bus/i2c/devices/$fakebus\-003(7|f)/driver\$ ]]; then
+    exit 0
+else
+    /bin/test "\$@"
+fi
+EOF
+    chmod +x "$BATS_MOCK_BINDIR/test"
+
+    cat <<EOF >"$BATS_MOCK_BINDIR/readlink"
+#!/bin/sh
+if [[ "\$1 \$2" =~ ^\-f\ /sys/bus/i2c/devices/$fakebus\-003(7|f)/driver\$ ]]; then
+    echo "same"
+elif [[ "\$1 \$2" =~ ^\-f\ /sys/bus/i2c/drivers/$fakedriver\$ ]]; then
+    echo "same"
+else
+    /bin/readlink "\$@"
+fi
+EOF
+    chmod +x "$BATS_MOCK_BINDIR/readlink"
+
+    # Mock grep for multiple commands
+    cat <<'EOF' >"$BATS_MOCK_BINDIR/grep"
+#!/bin/sh
+# cukinia_cmdline
+if [[ "$1 $2" =~ (^|\ )quiet(\ |$) ]]; then
+    exit 0
+# cukinia_kmod
+elif [[ "$1 $2" =~ ^inet_diag\ /proc/modules ]]; then
+    exit 0
+# cukinia_i2c
+elif [[ "$1 $2" =~ \-E\ 3(7|f)\|UU ]]; then
+    exit 0
+else
+    /usr/bin/grep "$@"
+fi
+EOF
+    chmod +x "$BATS_MOCK_BINDIR/grep"
 }
 
 @test "Run cukinia testcases" {
