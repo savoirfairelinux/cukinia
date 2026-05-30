@@ -182,6 +182,18 @@ if [ -r /etc/default/cukinia ]; then
 	. /etc/default/cukinia
 fi
 
+# _test: Wrapper around the test command to enable mocking it.
+# It's not enough to add the mock to PATH as test is a builtin and it won't be
+# overwritten.
+# args: same as the test command
+_test(){
+	if [ -n "$BATS_MOCK_BINDIR" ]; then
+		$BATS_MOCK_BINDIR/test "$@"
+	else
+		test "$@"
+	fi
+}
+
 # cukinia_conf_include: source additional configs
 # arg: $* - configs to include
 cukinia_conf_include()
@@ -532,7 +544,7 @@ check_process(){
 	for pid in $(pidof "$pidof_cmd"); do
 		procdir="/proc/$pid"
 		if $check_cmdline; then
-			# match exact full command with expected process 
+			# match exact full command with expected process
 			[ "$(tr "\000" " " < "/proc/$pid/cmdline" 2>/dev/null | awk '{$1=$1; print}')" = "$process" ] || continue
 		fi
 
@@ -950,9 +962,7 @@ _cukinia_i2c()
 
 	_cukinia_prepare "Checking if i2c-$bus_number${device_address:+-$device_address} exists${driver_name:+ and is $driver_name}"
 
-	if [ ! -d /sys/bus/i2c/devices/i2c-"$bus_number" ]; then
-		return 1
-	fi
+	_test -d /sys/bus/i2c/devices/i2c-"$bus_number" || return 1
 
 	if [ -z "$device_address" ]; then
 		return 0
@@ -979,7 +989,7 @@ _cukinia_i2c()
 	local target=/sys/bus/i2c/drivers/$driver_name
 
 	# fail on non-symlinks
-	[ -L "$link" ] || return 1
+	_test -L "$link" || return 1
 
 	[ "$(readlink -f "$link")" = "$(readlink -f "$target")" ] && return 0 || return 1
 }
