@@ -575,7 +575,13 @@ _cukinia_python_pkg()
 	fi
 
 	_cukinia_prepare "Checking python package \"$package\" is ${__not:+NOT }available"
-	"$python_interpreter" -c "import sys, pkgutil; sys.exit(0 if pkgutil.find_loader('$package') else 1)"
+
+	local check_module="import sys, pkgutil; sys.exit(0 if pkgutil.find_loader('$package') else 1)"
+	if [ ! $("$python_interpreter" -c 'exec("try:from pkgutil import find_loader\nexcept:exit(1)")') ]; then
+		check_module="import sys, importlib; sys.exit(0 if importlib.util.find_spec('$package') else 1)"
+	fi
+
+	"$python_interpreter" -c "$check_module"
 }
 
 # _cukinia_prepare: Prepare test for result
@@ -972,7 +978,7 @@ _cukinia_i2c()
 
 	_cukinia_prepare "Checking if i2c-$bus_number${device_address:+-$device_address} exists${driver_name:+ and is $driver_name}"
 
-	if [ ! -d /sys/bus/i2c/devices/i2c-"$bus_number" ]; then
+	if [ ! test -d /sys/bus/i2c/devices/i2c-"$bus_number" ]; then
 		return 1
 	fi
 
@@ -993,12 +999,14 @@ _cukinia_i2c()
 		return 0
 	fi
 
-	local device_path=$bus_number-$(printf '%0'4'd' $device_address)
+	local device_path=$bus_number-$(printf '%0'4'x' 0x$device_address)
 	local link=/sys/bus/i2c/devices/$device_path/driver
 	local target=/sys/bus/i2c/drivers/$driver_name
 
 	# fail on non-symlinks
-	[ -L "$link" ] || return 1
+	if [ ! test -L "$link" ]; then
+		return 1
+	fi
 
 	[ "$(readlink -f "$link")" = "$(readlink -f "$target")" ] && return 0 || return 1
 }
