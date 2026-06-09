@@ -101,7 +101,7 @@ cukinia_process_with_args "gpsd --nodaemon" appuser
 
 ```sh
 cukinia_cmdline console=ttyS0
-cukinia_kconf IPV6 y
+cukinia_kconf CONFIG_IPV6 y
 cukinia_kmod i2c_dev
 cukinia_kversion 6.6
 cukinia_sysctl net.ipv4.ip_forward 0
