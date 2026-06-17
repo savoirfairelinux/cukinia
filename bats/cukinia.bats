@@ -78,55 +78,68 @@ EOF
 
     cat <<'EOF' >"$BATS_MOCK_BINDIR/i2cdetect"
 #!/bin/sh
-if [[ "$1 $2 $3 $4" =~ \-y\ 9\ 0x3(7|f)\ 0x3(7|f) ]]; then
-    exit 0
-elif [[ "$1 $2 $3 $4" == "-y 9 0x25 0x25" ]]; then
-    exit 1
-else
-    /usr/bin/i2cdetect "$@"
-fi
+# Mock i2cdetect: check for -y flag with specific addresses and bus
+case "$1 $2 $3 $4" in
+    "-y 9 0x37 0x37"|"-y 9 0x3f 0x3f")
+        exit 0
+        ;;
+    "-y 9 0x25 0x25")
+        exit 1
+        ;;
+esac
+/usr/bin/i2cdetect "$@"
 EOF
     chmod +x "$BATS_MOCK_BINDIR/i2cdetect"
 
     cat <<EOF >"$BATS_MOCK_BINDIR/test"
 #!/bin/sh
-if [[ "\$1 \$2" =~ ^\-d\ /sys/bus/i2c/devices/i2c\-$fakebus\$ ]]; then
-    exit 0
-elif [[ "\$1 \$2" =~ ^\-L\ /sys/bus/i2c/devices/$fakebus\-003(7|f)/driver\$ ]]; then
-    exit 0
-else
-    /bin/test "\$@"
-fi
+case "\$1 \$2" in
+    "-d /sys/bus/i2c/devices/i2c-$fakebus")
+        exit 0
+        ;;
+    "-L /sys/bus/i2c/devices/$fakebus-0037/driver"|"-L /sys/bus/i2c/devices/$fakebus-003f/driver")
+        exit 0
+        ;;
+esac
+/bin/test "\$@"
 EOF
     chmod +x "$BATS_MOCK_BINDIR/test"
 
     cat <<EOF >"$BATS_MOCK_BINDIR/readlink"
 #!/bin/sh
-if [[ "\$1 \$2" =~ ^\-f\ /sys/bus/i2c/devices/$fakebus\-003(7|f)/driver\$ ]]; then
-    echo "same"
-elif [[ "\$1 \$2" =~ ^\-f\ /sys/bus/i2c/drivers/$fakedriver\$ ]]; then
-    echo "same"
-else
-    /bin/readlink "\$@"
-fi
+case "\$1 \$2" in
+    "-f /sys/bus/i2c/devices/$fakebus-0037/driver"|"-f /sys/bus/i2c/devices/$fakebus-003f/driver")
+        echo "same"
+        exit 0
+        ;;
+    "-f /sys/bus/i2c/drivers/$fakedriver")
+        echo "same"
+        exit 0
+        ;;
+esac
+/bin/readlink "\$@"
 EOF
     chmod +x "$BATS_MOCK_BINDIR/readlink"
 
     # Mock grep for multiple commands
     cat <<'EOF' >"$BATS_MOCK_BINDIR/grep"
 #!/bin/sh
-# cukinia_cmdline
-if [[ "$1 $2" =~ (^|\ )quiet(\ |$) ]]; then
-    exit 0
-# cukinia_kmod
-elif [[ "$1 $2" =~ ^inet_diag\ /proc/modules ]]; then
-    exit 0
-# cukinia_i2c
-elif [[ "$1 $2" =~ \-E\ 3(7|f)\|UU ]]; then
-    exit 0
-else
-    /usr/bin/grep "$@"
-fi
+# Handle grep patterns for cukinia tests
+case "$1 $2 $3 $4" in
+    *quiet*)
+        # cukinia_cmdline check
+        exit 0
+        ;;
+    *inet_diag*)
+        # cukinia_kmod check
+        exit 0
+        ;;
+    "-E 37|UU"*|"-E 0x37|UU"*|"-E 3f|UU"*|"-E 0x3f|UU"*)
+        # cukinia_i2c check
+        exit 0
+        ;;
+esac
+/usr/bin/grep "$@"
 EOF
     chmod +x "$BATS_MOCK_BINDIR/grep"
 }
