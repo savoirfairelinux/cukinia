@@ -95,6 +95,12 @@ OPTIONS:
 EOF
 }
 
+fatal()
+{
+	echo >&2 "cukinia: FATAL: $*"
+	exit 1
+}
+
 # Parse single character options (sh builtin does not support long options)
 while getopts ":o:f:hv-:" opt; do
 	case $opt in
@@ -160,8 +166,7 @@ csv)
 junitxml)
 	if [ "$__log_file" = "/dev/stdout" ]; then
 		usage
-		echo "Fatal: junitxml requires -o <file>"
-		exit 1
+		fatal "junitxml requires -o <file>"
 	fi
 	;;
 
@@ -175,8 +180,7 @@ if [ -z "$1" ]; then
 	config_file="$DEFAULT_CONFIG_FILE"
 else
 	if [ ! -r "$1" ]; then
-		echo "Fatal: cannot read specified config file ($1)"
-		exit 1
+		fatal "cannot read specified config file ($1)"
 	fi
 
 	config_file="$1"
@@ -214,8 +218,7 @@ cukinia_conf_include()
 		# in this case, we load every file in it!
 
 		if [ ! -r "$f" ]; then
-			echo >&2 "cukinia: FATAL: can't include \"$f\""
-			exit 1
+			fatal "can't include \"$f\""
 		fi
 		. "$f"
 	done
