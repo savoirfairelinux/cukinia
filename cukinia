@@ -313,7 +313,9 @@ cukinia_runner()
 	local result
 	local arguments="$@"
 
-	if [ -n "$__verbose" ]; then
+	if [ "$1" = "_cukinia_cmd" ]; then
+		"$@" >"$__stdout_tmp" 2>"$__stderr_tmp"
+	elif [ -n "$__verbose" ]; then
 		if [ "$__log_format" = "junitxml" ]; then
 			"$@" 1>$__stdout_tmp 2>$__stderr_tmp
 		else
@@ -323,6 +325,19 @@ cukinia_runner()
 		"$@" >/dev/null 2>&1
 	fi
 	ret=$?
+
+	if [ "$1" = "_cukinia_cmd" ]; then
+		# Capture output for potential post-processing by matching/containing commands
+		__last_cmd_output="$(cat "$__stdout_tmp" "$__stderr_tmp")"
+
+		if [ -z "$__verbose" ]; then
+			: >"$__stdout_tmp"
+			: >"$__stderr_tmp"
+		elif [ "$__log_format" != "junitxml" ]; then
+			cat "$__stdout_tmp"
+			cat "$__stderr_tmp" >&2
+		fi
+	fi
 
 	if [ -n "$CUKINIA_ALWAYS_PASS" ]; then
 		__not="pass"
@@ -665,12 +680,8 @@ _require_executable() {
 _cukinia_cmd()
 {
 	_cukinia_prepare "Running \"$*\" does ${__not:+NOT }return 0"
-	
-	# Capture output for potential post-processing by matching/containing commands
-	__last_cmd_output="$("$@" 2>&1)"
-	local ret=$?
-	
-	return $ret
+
+	"$@"
 }
 
 # _cukinia_matching: validate that every line of previous command output matches at least one pattern
