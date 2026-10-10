@@ -73,10 +73,12 @@ fi
 EOF
     chmod +x "$BATS_MOCK_BINDIR/iw"
 
-    # Mock cukinia_systemd_unit
+    # Mock cukinia_systemd_unit & cukinia_systemd_failed
     cat <<'EOF' >"$BATS_MOCK_BINDIR/systemctl"
 #!/bin/sh
 if [ "$1 $2" = "is-active atd.service" ]; then
+    exit 0
+elif [ "$1" = "--failed" ]; then
     exit 0
 else
     /bin/systemctl "$@"
