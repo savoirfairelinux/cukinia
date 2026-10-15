@@ -63,7 +63,7 @@ trap cleanup 0
 # Cleanup of temporary files
 cleanup()
 {
-	rm -f $__stderr_tmp $__stdout_tmp $__logfile_tmp $__junitfile_tmp
+	rm -f $__stderr_tmp $__stdout_tmp $__condition_tmp $__logfile_tmp $__junitfile_tmp
 
 	if [ -n "$__logfile_tmp" ]; then
 		rm -f $__logfile_tmp.*
@@ -152,6 +152,7 @@ shift $((OPTIND-1))
 __logfile_tmp=$(mktemp)
 __stderr_tmp=$(mktemp)
 __stdout_tmp=$(mktemp)
+__condition_tmp=$(mktemp)
 
 # Init logging
 cukinia_epoch=$(date +%s)
@@ -465,11 +466,15 @@ _condition_run()
 	local ret=0
 
 	__condition_string="$1"
-	eval "$1" >/dev/null || __skip_condition=1
+	# An unmet condition may print why, which becomes the skip reason
+	if ! eval "$1" >$__condition_tmp; then
+		__skip_condition=1
+		__skip_reason=$(cat $__condition_tmp)
+	fi
 	shift
 
 	"$@" || ret=1
-	unset __skip_condition __condition_string
+	unset __skip_condition __condition_string __skip_reason
 
 	return $ret
 }
@@ -648,7 +653,7 @@ _cukinia_result()
 	esac
 
 	if [ "$__skip_condition" ]; then
-		local suffix=" [$(_colorize yellow2 "unmet condition: $__condition_string")]"
+		local suffix=" [$(_colorize yellow2 "unmet condition: ${__skip_reason:-$__condition_string}")]"
 	fi
 
 	cukinia_log "[$result] "${__test_id:+ ${__test_id} --}" ${__cukinia_cur_test}${suffix}"
@@ -1756,7 +1761,7 @@ EOF
 		__suite_skipped=$((__suite_skipped + 1))
 
 		cat >>"$logfile" <<EOF
-      <skipped message="skipped"><![CDATA[$message: SKIP]]></skipped>
+      <skipped message="skipped"><![CDATA[unmet condition: ${__skip_reason:-$__condition_string}]]></skipped>
 EOF
 	fi
 
