@@ -296,6 +296,7 @@ These may also **prefix** any test statement, and can be combined:
 
 - `when "<shell_expr>"` … *test* → run test only if expression returns success
 - `unless "<shell_expr>"` … *test* → run test only if expression returns failure (reported as SKIP when not executed)
+- When the condition is not met, its output (if any) is the skip reason shown in the log and the JUnit XML `<skipped>` element
 - `on <result>` → execute statements conditionally on test result (e.g., `on success`, `on failure`)
   - `retry <count> [after <interval>]` → retry a test `count` times with optional interval (e.g., `2s`, `1m`, `3h`, `1d`)
 
@@ -303,14 +304,26 @@ These may also **prefix** any test statement, and can be combined:
 
 ```sh
 on_eval_board() { grep -q EVK /sys/firmware/devicetree/base/model; }
+has_network() { ip route | grep -q default || { echo "No default route"; return 1; }; }
 on_arm64 { test "$(uname -m)" = "aarch64"; }
 
 when "on_arm64 && !on_eval_board" \
   as "Custom LED controller was probed"  \
     cukinia_test -d /sys/class/leds/customled
 
+when "has_network" \
+  as "Update server is reachable" \
+    cukinia_cmd ping -c 1 update.example.com
+
 on failure retry 3 after 2s \
     cukinia_systemd_unit big-app.service
+```
+
+When skipped, a silent condition only shows the expression, while a condition that prints a message shows that message:
+
+```
+[SKIP]  Custom LED controller was probed [unmet condition: on_arm64 && !on_eval_board]
+[SKIP]  Update server is reachable [unmet condition: No default route]
 ```
 
 ---

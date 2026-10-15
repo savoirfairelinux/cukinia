@@ -174,6 +174,7 @@ EOF
     assert_line --partial '----> cukinia_cmd <----'
     assert_line --regexp '.*SKIP.*  Should PASS on arm64 only or skip*'
     assert_line --regexp '.*SKIP.*  Should SKIP on PC only*'
+    assert_line --regexp '.*SKIP.*  Should SKIP with a reason \[.*unmet condition: No network on this test bench.*\]'
 
     assert_line --regexp '.*etry.*"Should pass and retry 2 times" in 0s.*'
     assert_line --regexp '.*etry.*"Should pass and retry 2 times" in 0s.*'
